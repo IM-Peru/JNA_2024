@@ -21,8 +21,8 @@ library(modeest)
 ## Step 1. Load data
 
 ```{r}
-setwd("C:/Users/GARCIAAC/OneDrive - UNHCR/Desktop/R Projects/JNA/Evaluación Conjunta")
-kobo_setup(url = "https://kobo.unhcr.org",token = "881a29d35c1e30a1e0d03ef1fb9c489763933d79")
+setwd(****)
+kobo_setup(url = "https://kobo.unhcr.org",token = *****)
 
 x <- kobo_submissions("aHP5J4VvRj23sdMABb9HUW")
 
