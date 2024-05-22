@@ -189,7 +189,7 @@ HH <- HH |>
            if_else(Intro01_A == "ACNUR _05703", "ACNUR_05703", Intro01_A)
          )
 
-# Delete 6 invalid registries that where not passed the supervision re-call 
+# Delete 6 invalid registries that did not pass the supervision re-call quality check
 HH <- HH |>
   subset(!`_uuid` %in% c('7a54aa3e-aac9-4cb9-97e1-2983138d7f3e',
                          'c3da093c-80f7-4e17-acd7-b808024bbeeb',
@@ -232,7 +232,7 @@ HH <- HH |>
       `_id` == 49294338 ~ 1300,
       TRUE ~ FS_D3_Q2))
 
-# Clearing the values of WA_D1_Q2 since there where changes in the skip logic of the regional form
+# Clearing the values of WA_D1_Q2 since there where changes in the skip logic on the regional form
 HH <- HH |>
   mutate(WA_D1_Q2 = 
            ifelse(WA_D1_Q1 == "2", NA, WA_D1_Q2))
