@@ -14,7 +14,7 @@ For the data collection procees, two service providers where hired to do the pho
 
 The final dataset after quality checks and consistency procedures has information of 1,573 households and 5,827 people.
 
-* The xls form used can be found here:
+* The xls form used can be found here: https://github.com/IM-Peru/JNA_2024/blob/main/20240405%20JNA%20Per%C3%BA%20-%20Versi%C3%B3n%202.xlsx
 
 * Raw data can be found here:
 
