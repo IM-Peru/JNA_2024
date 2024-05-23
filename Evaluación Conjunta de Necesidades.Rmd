@@ -30,19 +30,6 @@ library(modeest)
 ```
 
 
-```{r echo = FALSE}
-setwd("C:/Users/GARCIAAC/OneDrive - UNHCR/Desktop/R Projects/JNA/Evaluación Conjunta")
-kobo_setup(url = "https://kobo.unhcr.org",token = "881a29d35c1e30a1e0d03ef1fb9c489763933d79")
-
-x <- kobo_submissions("aHP5J4VvRj23sdMABb9HUW")
-
-HH <- x$main
-Individual <- x$rpt_hhmnames
-
-```
-
-
-
 # Step 2. Reorder columns
 
 ```{r}
