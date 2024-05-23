@@ -5,8 +5,7 @@ date: "2024-04-08"
 output: html_document
 ---
 
-
-```{r}
+```{r message = FALSE, warning = FALSE}
 library(tidyverse)
 library(readxl)
 library(ggplot2)
@@ -18,11 +17,22 @@ library(modeest)
 
 ```
 
-## Step 1. Load data
+# Step 1. Load data
 
 ```{r}
-setwd(****)
-kobo_setup(url = "https://kobo.unhcr.org",token = *****)
+#setwd("****")
+#kobo_setup(url = "https://kobo.unhcr.org",token = ****)
+
+#x <- kobo_submissions("****")
+
+#HH <- x$main
+#Individual <- x$rpt_hhmnames
+```
+
+
+```{r echo = FALSE}
+setwd("C:/Users/GARCIAAC/OneDrive - UNHCR/Desktop/R Projects/JNA/Evaluación Conjunta")
+kobo_setup(url = "https://kobo.unhcr.org",token = "881a29d35c1e30a1e0d03ef1fb9c489763933d79")
 
 x <- kobo_submissions("aHP5J4VvRj23sdMABb9HUW")
 
@@ -31,7 +41,9 @@ Individual <- x$rpt_hhmnames
 
 ```
 
-## Step 2. Reorder columns
+
+
+# Step 2. Reorder columns
 
 ```{r}
 # rename variables that where wrongly named
@@ -122,10 +134,18 @@ HH <- HH |>
 
 ```
 
+# Step 3. Functions
 
-## Step 3. Functions
+Some functions need to be created to be used during the data-processing of the individual dataset since there where changes applied to the regional form while we had already entered the data collection process.
 
 ```{r}
+
+# this function will be used for rounding in de CARI_FES
+round_half_up <- function(x) {
+  floor(x + 0.5)
+}
+
+# Peru Only
 # define processes to clear inconsistencies in bulk
 
 replace_values_nut_under_6_months <- function(data, uuid_condition, aux_condition, columns) {
@@ -158,16 +178,20 @@ replace_values_nut_over_5_years <- function(data, age_condition, columns) {
   return(data)
 }
 
-# this function will be used for rounding in de CARI_FES
-round_half_up <- function(x) {
-  floor(x + 0.5)
-}
-
 
 ```
 
+# Step 4. Household Pre-processing
 
-## Step 4. Household Pre-processing
+The aim was to lose as less information as possible. We had two different data services providers working in this project. PULSO was hired by UNHCR and Equilibrium hired by IOM. PULSO identified 6 records where the data quality check was not passed, then they where dismissed from the dataset. Other minor adjustments had to do with phone numbers and internal coding. On the other hand, Equilibrium corrected information on food security via a second call.
+
+Other pre-processing:
+
+clearing some variables since there where changes in the skip logic in the regional form while we were already gathering data.
+
+Creation of SHE_D1_Q3_ALL that will be used in step 9 Household level indicators
+
+#### AD HOC FOR PERU
 
 ```{r}
 
@@ -189,7 +213,7 @@ HH <- HH |>
            if_else(Intro01_A == "ACNUR _05703", "ACNUR_05703", Intro01_A)
          )
 
-# Delete 6 invalid registries that did not pass the supervision re-call quality check
+# Delete 6 invalid registries that did not pass the supervision re-call quality check 
 HH <- HH |>
   subset(!`_uuid` %in% c('7a54aa3e-aac9-4cb9-97e1-2983138d7f3e',
                          'c3da093c-80f7-4e17-acd7-b808024bbeeb',
@@ -232,7 +256,7 @@ HH <- HH |>
       `_id` == 49294338 ~ 1300,
       TRUE ~ FS_D3_Q2))
 
-# Clearing the values of WA_D1_Q2 since there where changes in the skip logic on the regional form
+# Clearing the values of WA_D1_Q2 since there where changes in the skip logic of the regional form
 HH <- HH |>
   mutate(WA_D1_Q2 = 
            ifelse(WA_D1_Q1 == "2", NA, WA_D1_Q2))
@@ -263,8 +287,13 @@ HH <- HH |>
 
 ```
 
+# Step 5. Individual Pre-processing
 
-## Step 5. Individual Pre-processing
+In this step data is edited in the variables related with age (AgeMonths, ageMD, age, HH07 and HH07_monts). Since we used an old RMS form as the canvas for the JNA some calculations and other variables where inherited. Age was calculated substracting the Today() variable minus date of birth (HH06). Errors emerged when enumerators tried to correct the date of birth due to an approximate calculation of age (ie. phone survey was held in april, and someone said their DOB was 04-2000, the calculated age would be 24, however he/she might have been born in the final days of April so could still be a 23 y/o)
+
+The nutrition quality checks functions created in step 3 where used to fix errors due to bad programming of the xls form. We spotted the error 3 days deep in the data collection process. Some values were imputed in the nutrition questions since 23 minors where not assessed in the NUT_D8 and NUT_D10 indicators. We used the mode since it was a categorical question
+
+#### AD HOC FOR PERU
 
 ```{r}
 
@@ -687,7 +716,8 @@ Individual <- Individual |>
       TRUE ~ INT_D2_Q3)
     )
 
-    
+# creating a variable that will help build the indicator as a sum of different food groups for children among 6 and 59 months of age.
+
 Individual <- Individual |>
   mutate(NUT_D10_Q1_ALL = 
            as.numeric(NUT_D10_Q1_1) +
@@ -701,9 +731,9 @@ Individual <- Individual |>
 
 ```
 
+# Step 6. Filtering
 
-
-## Step 6. Filtering
+Filter and subset the Individual dataset according to the Parent ID's of the Households that where selected with the filtering
 
 ```{r}
 HH <- HH |>
@@ -719,17 +749,16 @@ HH <- HH |>
 
 HH_final_uuid <-HH$`_index`
 
-# Falta filtrar por duplicados
-
 Individual <- Individual |>
   filter(`_parent_index` %in% HH_final_uuid)
 
 ```
 
+# Step 7. Qualitative pre-processing
 
+Creation of new categories in the "Other (specify)" options. Some answers needed to be edited since it already existed an option and there was not need to use the "Other" text-option
 
-
-## Step 7. Qualitative pre-processing
+#### AD HOC FOR PERU
 
 ```{r}
 # Re categorization of "other" in Individual dataset
@@ -1678,10 +1707,13 @@ HH <- HH |>
 
 ```
 
-
 # Step 8. Food security check
 
-```{r}
+Extra quality data check on food security section. PULSO identified there where some HH with no children but had used FS_D2_Q4 option as well as FS_D4_Q4
+
+#### AD HOC FOR PERU
+
+```{r message = FALSE}
 
 # Summarize the data to count the occurrences of each age for each parent_index
 summarized_individual <- Individual |>
@@ -1740,8 +1772,9 @@ HH <- HH |>
 
 ```
 
+# Step 9. Household level indicators
 
-## Step 9. Household level indicators
+Indicator creation for the dimensions at the household level. Be careful since I did some adhoc adjustmets. For example creating the round_half_up function in step 3 and the variable SHE_D1_Q3_ALL in step 4. Indicator INT_D3 is built following the specific structure used under our XLS form. The structure of how the humanitarian transportation questions where asked is also specific to Peru.
 
 ```{r}
 
@@ -1865,7 +1898,7 @@ HH <- HH |>
   mutate(FS_D4 = Max_coping_behaviour) |>
   mutate(Mean_coping_capacity_FES = rowMeans(across(c(Max_coping_behaviour, Foodexp_4pt)), na.rm = TRUE),
          CARI_unrounded_FES = rowMeans(across(c(FCS_rCSI, Mean_coping_capacity_FES)), na.rm = TRUE),
-         CARI_FES = round_half_up(CARI_unrounded_FES))
+         CARI_FES = round_half_up(CARI_unrounded_FES)) # do not use simple function "round"
 
 
 ## Protección
@@ -1904,8 +1937,9 @@ HH <- HH |>
 
 ```
 
+# Step 10. Individual Level Indicators
 
-## Step 10. Individual Level Indicators
+Indicator creation for the dimensions at the individual or member of household level. Be careful since I did some adhoc adjustmets. For example creating the variable NUT_D10_Q1_ALL in step 5.
 
 ```{r}
 ## Integración
@@ -2012,8 +2046,11 @@ Individual <- Individual |>
 
 ```
 
-
 # Step 11. Final filtering
+
+Related with the data quality check on food security.
+
+#### AD HOC FOR PERU
 
 ```{r}
 
@@ -2033,11 +2070,11 @@ Individual <- Individual |>
 
 ```
 
-
-# Step 13. PIN Calculations
+# Step 12. PIN Calculations
 
 ```{r}
-# Subset y agrupación a nivel de hogar de los indicadores que están en la base de individuos
+# Subset and group the individual indicators from the Individual dataset at Household level to then merge them in one final dataset 
+
 Individual_copy <- Individual |>
   select(`_parent_index`, INT_D1, INT_D2, EDU_D1, EDU_D2, EDU_D3, HE_D1, PRO_D4, NUT_D1, NUT_D4, NUT_D5, NUT_D8, NUT_D10) |>
   group_by(`_parent_index`) |>
@@ -2085,16 +2122,6 @@ HH_copy <- HH_copy |>
 
 Data_final <- merge(HH_copy, Individual_copy, by.x = "_index", by.y = "_parent_index", all.x = TRUE)
 
-# Data_final <- Data_final |>
-#   select(`_index`, implementador, admin1, admin2, MH_1, SECTOR, count, EDU_D1, EDU_D2, EDU_D3, 
-#          INT_D1, INT_D2,	INT_D3,	INT_D4,	HE_D1, WA_D1, WA_D2, WA_D4, WA_D6, WA_D8, WA_D11, 
-#          FCS, FCG, FCS_4pt, FS_D1, R_CSI, r_CSI_categories, FCS_rCSI, FS_D2, FES, Foodexp_4pt, 
-#          FS_D3, stress_coping, crisis_coping, emergency_coping, Max_coping_behaviour, FS_D4, 
-#          Mean_coping_capacity_FES, CARI_unrounded_FES, CARI_FES, NUT_D1, NUT_D4, NUT_D5, 
-#          NUT_D8, NUT_D10, PRO_D1, PRO_D2, PRO_D3, PRO_D4, PRO_D5, CP_D1, GBV_D1, GBV_D3, 
-#          HTS_D1, HTS_D2, HT_D1, SHE_D1, SHE_D2, SHE_D3, SHE_D4)
-
-
 Data_final <- Data_final |>
   select(`_index`, admin1, admin2, SECTOR, count, EDU_D1, EDU_D2, EDU_D3, 
          INT_D1, INT_D2,	INT_D3,	INT_D4,	HE_D1, WA_D1, WA_D2, WA_D4, WA_D6, WA_D8, WA_D11, 
@@ -2102,57 +2129,74 @@ Data_final <- Data_final |>
          NUT_D8, NUT_D10, PRO_D1, PRO_D2, PRO_D3, PRO_D4, PRO_D5, CP_D1, GBV_D1, GBV_D3, 
          HTS_D1, HTS_D2, HT_D1, SHE_D1, SHE_D2, SHE_D3, SHE_D4)
 
-write_xlsx(Data_final, "DataFinal.xlsx")
+
+
+# Further coding needed to actually create the Deprivation Sector punctuation, MPI Punctuation and Intersectoral PIN and sectoral PIN
 
 
 ```
 
+# Step 13. Removing and reorganizing columns
 
-
-
-# Step 12. Removing and reorganizing columns
+Output = for Dashboard purposes
 
 ```{r}
 
 HH <- HH |>
-  select("_index", "interviewdate", "implementador", "DEMO_1", "DEMO_2", "DEMO_00.6", "DEMO_5", "DEMO_6", 
-         "DEMO_7", "country", "admin1", "admin2", "DEMO_18", "MH_1", "INT_D3_Q1", "INT_D3_Q1B", 
+  select("_index", "interviewdate", "implementador", "DEMO_1", "DEMO_2", "DEMO_00.6", "DEMO_5", 
+         "DEMO_6", "DEMO_7", "country", "admin1", "admin2", "DEMO_18", "MH_1",
+         "INT_D3_Q1", "INT_D3_Q1B", 
          "INT_D3_Q1B_1", "INT_D3_Q1B_2", "INT_D3_Q1B_3", "INT_D3_Q1B_4", "INT_D3_Q1B_5", "INT_D3_Q1B_6",
          "INT_D3_Q1B_7", "INT_D3_Q1B_8", "INT_D3_Q1B_9", "INT_D3_Q1B_98", "INT_D3_Q1B_99", "INT_D3_Q2",
-         "INT_D3_Q2_1", "INT_D3_Q2_2", "INT_D3_Q2_3", "INT_D3_Q2_4", "INT_D3_Q2_5", "INT_D3_Q2_6", "INT_D3_Q2_7", "INT_D3_Q2_8",
+         "INT_D3_Q2_1", "INT_D3_Q2_2", "INT_D3_Q2_3", "INT_D3_Q2_4", "INT_D3_Q2_5", 
+         "INT_D3_Q2_6", "INT_D3_Q2_7", "INT_D3_Q2_8",
          "INT_D3_Q2_9", "INT_D3_Q2_10", "INT_D3_Q2_98", "INT_D3_Q2_99", "INT_D3_Q2_O", "INT_D4_Q1", 
-         "INT_D4_Q1_1", "INT_D4_Q1_2", "INT_D4_Q1_3", "INT_D4_Q1_4", "INT_D4_Q1_5", "INT_D4_Q1_6", "INT_D4_Q1_10", "INT_D4_Q1_96",
+         "INT_D4_Q1_1", "INT_D4_Q1_2", "INT_D4_Q1_3", "INT_D4_Q1_4", "INT_D4_Q1_5", 
+         "INT_D4_Q1_6", "INT_D4_Q1_10", "INT_D4_Q1_96",
          "INT_D4_Q1_98", "INT_D4_Q1_99", "INT_D4_Q1_O", "FS_D1_Q1", "FS_D1_Q2", "FS_D1_Q3", "FS_D1_Q4", 
          "FS_D1_Q5", "FS_D1_Q6", "FS_D1_Q7", "FS_D1_Q8", "FS_D2_Q1", "FS_D2_Q2", "FS_D2_Q3", "FS_D2_Q4",
          "FS_D2_Q5", "FS_D3_Q1", "FS_D3_Q2", "FS_D4_Q1", "FS_D4_Q2", "FS_D4_Q3", "FS_D4_Q4", "FS_D4_Q5", 
-         "FS_D4_Q6", "FS_D4_Q7", "FS_D4_Q8", "FS_D4_Q9", "FS_D4_Q10", "HT_D1_Q1_first", "HT_D1_Q1_first_o",
-         "HT_D1_Q1_second", "HT_D1_Q1_second_o", "HT_D1_Q2", "HT_D2_Q1", "HT_D2_Q1_O", "SHE_D1_Q1", "SHE_D1_Q1_O", 
+         "FS_D4_Q6", "FS_D4_Q7", "FS_D4_Q8", "FS_D4_Q9", "FS_D4_Q10", 
+         "HT_D1_Q1_first", "HT_D1_Q1_first_o",
+         "HT_D1_Q1_second", "HT_D1_Q1_second_o", "HT_D1_Q2", "HT_D2_Q1", "HT_D2_Q1_O", 
+         "SHE_D1_Q1", "SHE_D1_Q1_O", 
          "SHE_D1_Q2", "SHE_D1_Q2_1", "SHE_D1_Q2_2", "SHE_D1_Q2_3", "SHE_D1_Q2_4", "SHE_D1_Q2_5",
          "SHE_D1_Q2_6", "SHE_D1_Q2_98", "SHE_D1_Q2_99", "SHE_D1_Q3", "SHE_D1_Q3_1", "SHE_D1_Q3_2", 
-         "SHE_D1_Q3_3", "SHE_D1_Q3_4", "SHE_D1_Q3_5", "SHE_D1_Q3_98", "SHE_D1_Q3_99", "SHE_D2_Q1", "SHE_D3_Q1",
-         "SHE_D3_Q1_1", "SHE_D3_Q1_2", "SHE_D3_Q1_3", "SHE_D3_Q1_4", "SHE_D4_Q1", "WA_D1_Q1", "WA_D1_Q2", "WA_D2_Q1", 
+         "SHE_D1_Q3_3", "SHE_D1_Q3_4", "SHE_D1_Q3_5", "SHE_D1_Q3_98", "SHE_D1_Q3_99", 
+         "SHE_D2_Q1", "SHE_D3_Q1",
+         "SHE_D3_Q1_1", "SHE_D3_Q1_2", "SHE_D3_Q1_3", "SHE_D3_Q1_4", "SHE_D4_Q1", 
+         "WA_D1_Q1", "WA_D1_Q2", "WA_D2_Q1", 
          "WA_D2_Q2", "WA_D4_Q1", "WA_D4_Q2", "WA_D6_Q1", "WA_D8_Q1", "WA_D11_Q1", "PRO_D1_Q1",
-         "PRO_D1_Q1_1", "PRO_D1_Q1_2", "PRO_D1_Q1_3", "PRO_D1_Q1_4", "PRO_D1_Q1_5", "PRO_D1_Q1_6", "PRO_D1_Q1_7",
+         "PRO_D1_Q1_1", "PRO_D1_Q1_2", "PRO_D1_Q1_3", "PRO_D1_Q1_4", "PRO_D1_Q1_5",
+         "PRO_D1_Q1_6", "PRO_D1_Q1_7",
          "PRO_D1_Q1_9", "PRO_D1_Q1_96", "PRO_D1_Q1_98", "PRO_D1_Q1_99", "PRO_D1_Q1_O", "PRO_D2_Q1",
-         "PRO_D2_Q1B", "PRO_D2_Q1B_1", "PRO_D2_Q1B_2", "PRO_D2_Q1B_3", "PRO_D2_Q1B_4", "PRO_D2_Q1B_5", "PRO_D2_Q1B_6",
+         "PRO_D2_Q1B", "PRO_D2_Q1B_1", "PRO_D2_Q1B_2", "PRO_D2_Q1B_3", "PRO_D2_Q1B_4", 
+         "PRO_D2_Q1B_5", "PRO_D2_Q1B_6",
          "PRO_D2_Q1B_7", "PRO_D2_Q1B_8", "PRO_D2_Q1B_9", "PRO_D2_Q1B_10", "PRO_D2_Q1B_96",
          "PRO_D2_Q1B_98", "PRO_D2_Q1B_99", "PRO_D2_Q1B_O", "PRO_D3_Q1", "PRO_D3_Q1B", "PRO_D3_Q1B_1", 
          "PRO_D3_Q1B_2", "PRO_D3_Q1B_3", "PRO_D3_Q1B_4", "PRO_D3_Q1B_5", "PRO_D3_Q1B_6", "PRO_D3_Q1B_7",
          "PRO_D3_Q1B_96", "PRO_D3_Q1B_98", "PRO_D3_Q1B_99", "PRO_D3_Q1B_O", "PRO_D3_Q2", "PRO_D3_Q2B", 
          "PRO_D3_Q2B_1", "PRO_D3_Q2B_2", "PRO_D3_Q2B_3", "PRO_D3_Q2B_4", "PRO_D3_Q2B_5", "PRO_D3_Q2B_6",
          "PRO_D3_Q2B_7", "PRO_D3_Q2B_8", "PRO_D3_Q2B_9", "PRO_D3_Q2B_98", "PRO_D3_Q2B_99", "PRO_D5_Q1",
-         "PRO_D5_Q2", "PRO_D5_Q2_1", "PRO_D5_Q2_2", "PRO_D5_Q2_3", "PRO_D5_Q2_4", "PRO_D5_Q2_5", "PRO_D5_Q2_6",
-         "PRO_D5_Q2_7", "PRO_D5_Q2_98", "PRO_D5_Q2_99", "GBV_D1_Q1", "GBV_D1_Q1B", "GBV_D1_Q1B_1", "GBV_D1_Q1B_2",
+         "PRO_D5_Q2", "PRO_D5_Q2_1", "PRO_D5_Q2_2", "PRO_D5_Q2_3", "PRO_D5_Q2_4", 
+         "PRO_D5_Q2_5", "PRO_D5_Q2_6",
+         "PRO_D5_Q2_7", "PRO_D5_Q2_98", "PRO_D5_Q2_99", "GBV_D1_Q1", "GBV_D1_Q1B", 
+         "GBV_D1_Q1B_1", "GBV_D1_Q1B_2",
          "GBV_D1_Q1B_3", "GBV_D1_Q1B_4", "GBV_D1_Q1B_5", "GBV_D1_Q1B_6", "GBV_D1_Q1B_8",
          "GBV_D1_Q1B_96", "GBV_D1_Q1B_98", "GBV_D1_Q1B_99", "GBV_D1_Q1B_O", "GBV_D2_Q1", "HTS_D1_Q1", 
-         "HTS_D1_Q2", "HTS_D2_Q1", "HTS_D2_Q1_1", "HTS_D2_Q1_2", "HTS_D2_Q1_3", "HTS_D2_Q1_4", "HTS_D2_Q1_5",
-         "HTS_D2_Q1_6", "CP_D1_Q1", "CP_D1_Q1_1", "CP_D1_Q1_2", "CP_D1_Q1_3", "CP_D1_Q1_4", "CP_D1_Q1_5", "CP_D1_Q1_6", 
+         "HTS_D1_Q2", "HTS_D2_Q1", "HTS_D2_Q1_1", "HTS_D2_Q1_2", "HTS_D2_Q1_3", 
+         "HTS_D2_Q1_4", "HTS_D2_Q1_5",
+         "HTS_D2_Q1_6", "CP_D1_Q1", "CP_D1_Q1_1", "CP_D1_Q1_2", "CP_D1_Q1_3", 
+         "CP_D1_Q1_4", "CP_D1_Q1_5", "CP_D1_Q1_6", 
          "CP_D1_Q1_7", "CP_D1_Q1_98", "CP_D1_Q1_99", "CP_D1_Q2", "psea3", "_id",
-         "__version__", "_uuid", "rpt_hhmnames_count", "SECTOR", "SHE_D1_Q3_ALL", "INT_D3", "INT_D4", "SHE_D1", 
+         "__version__", "_uuid", "rpt_hhmnames_count", "SECTOR", "SHE_D1_Q3_ALL", 
+         "INT_D3", "INT_D4", "SHE_D1", 
          "SHE_D2", "SHE_D3", "SHE_D4", "WA_D1", "WA_D2", "WA_D4", "WA_D6", "WA_D8", "WA_D11", "HT_D1",
-         "FCS", "FCG", "FCS_4pt", "FS_D1", "R_CSI", "r_CSI_categories", "FCS_rCSI", "FS_D2", "FES", "Foodexp_4pt",
+         "FCS", "FCG", "FCS_4pt", "FS_D1", "R_CSI", "r_CSI_categories", "FCS_rCSI", 
+         "FS_D2", "FES", "Foodexp_4pt",
          "FS_D3", "stress_coping", "crisis_coping", "emergency_coping", "Max_coping_behaviour",
-         "FS_D4", "Mean_coping_capacity_FES", "CARI_unrounded_FES", "CARI_FES", "PRO_D1", "PRO_D2", "PRO_D3",
+         "FS_D4", "Mean_coping_capacity_FES", "CARI_unrounded_FES", "CARI_FES", "PRO_D1", 
+         "PRO_D2", "PRO_D3",
          "PRO_D5", "GBV_D1", "GBV_D3", "HTS_D1", "HTS_D2", "CP_D1") 
 
 
@@ -2185,12 +2229,9 @@ Individual <- Individual |>
 
 ```
 
+# Step 14. Exporting the datasets
 
-
-
-#Step 13. Exporting the datasets
-
-```{r}
+```{r message = FALSE, warning = FALSE}
 hoy<-today()
 
 hora<-timestamp()
@@ -2199,11 +2240,9 @@ date_time <- substr(hora, start = 14, stop = 28)
 
 date_time <- gsub("[\\s:]", "", date_time)
 
-write_xlsx(HH, paste0("HH_", date_time,".xlsx"))
-write_xlsx(Individual, paste0("Individual_", date_time,".xlsx"))
+data_listed<-list("HH" = HH, "Individual" = Individual, "Data_final" = Data_final)
+
+write_xlsx(data_listed, paste0("JNA Peru ", date_time, ".xlsx"))
+
 
 ```
-
-
-
-
