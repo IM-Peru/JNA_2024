@@ -131,14 +131,17 @@ result_matrix["entries_max_1", "exits_max_1"]   <- entries_max_1 - exits_max_1
 saldo_diario <- as.data.frame(as.table(result_matrix)) |> 
   mutate(across(Freq,\(x) round(x, 0))) |> 
   rename(Entries = Var1) |> 
-  rename(Exits = Var2)
+  rename(Exits = Var2) |> 
+  mutate(Entries = if_else(Entries == "entries_max_1", "Máximo Ingresos", if_else(Entries == "entries_min_1", "Mínimo Ingresos", "Promedio Ingresos"))) |> 
+  mutate(Exits = if_else(Exits == "exits_max_1", "Máximo Salidas", if_else(Exits == "exits_min_1", "Mínimo Salidas", "Promedio Salidas")))
+
 
 #print(result_matrix)
 
 ggplot(
   saldo_diario |> 
-    mutate(Entries = fct_relevel(Entries, c("entries_max_1", "entries_min_1", "entries_mean_1")),
-                Exits = fct_relevel(Exits, c("exits_mean_1", "exits_min_1", "exits_max_1"))),
+    mutate(Entries = fct_relevel(Entries, c("Máximo Ingresos", "Mínimo Ingresos", "Promedio Ingresos")),
+                Exits = fct_relevel(Exits, c("Promedio Salidas", "Mínimo Salidas", "Máximo Salidas"))),
   aes(
     x = Exits,
     y = Entries
@@ -180,6 +183,9 @@ ggplot(
 
 
 ```
+
+La tabla de calor enseña las posibles combinaciones de flujos observados, dividiendo entradas y salidas en promedio, mínimos y máximos. La primera celda arriba la izquierda, por ejemplo, enseña el saldo diario subtrayendo el promedio de salidas al promedio de entradas durante el periodo de observación.
+
 :::
 
 ::: {.column width="20%"}
@@ -210,12 +216,13 @@ max_1 <- c(stock_2024, stock_2024 + (sum(entries_max_1 - exits_min_1) * 365), st
 stock_proj_1 <- data.frame(year, mean_1, min_1, max_1) |> 
   pivot_longer(-1, names_to = "type", values_to = "stock") |> 
   mutate(type = str_sub(type, end = -3)) |> 
-  mutate(year = as.character(year)) 
+  mutate(year = as.character(year)) |> 
+  mutate(type = if_else(type == "mean", "Promedio", if_else(type == "min", "Mínimo", "Máximo")))
 
 
 # Plot
 ggplot(stock_proj_1 |> 
-         mutate(type = fct_relevel(type, c("mean", "min", "max")),
+         mutate(type = fct_relevel(type, c("Promedio", "Mínimo", "Máximo")),
                 year = fct_relevel(year, c("2026", "2025", "2024")))) +
   geom_col(aes(
     x = type,
@@ -305,14 +312,17 @@ result_matrix["entries_max_2", "exits_max_2"]   <- entries_max_2 - exits_max_2
 saldo_diario <- as.data.frame(as.table(result_matrix)) |> 
   mutate(across(Freq,\(x) round(x, 0))) |> 
   rename(Entries = Var1) |> 
-  rename(Exits = Var2)
+  rename(Exits = Var2) |> 
+  mutate(Entries = if_else(Entries == "entries_max_2", "Máximo Ingresos", if_else(Entries == "entries_min_2", "Mínimo Ingresos", "Promedio Ingresos"))) |> 
+  mutate(Exits = if_else(Exits == "exits_max_2", "Máximo Salidas", if_else(Exits == "exits_min_2", "Mínimo Salidas", "Promedio Salidas")))
+
 
 #print(result_matrix)
 
 ggplot(
   saldo_diario |> 
-    mutate(Entries = fct_relevel(Entries, c("entries_max_2", "entries_min_2", "entries_mean_2")),
-                Exits = fct_relevel(Exits, c("exits_mean_2", "exits_min_2", "exits_max_2"))),
+    mutate(Entries = fct_relevel(Entries, c("Máximo Ingresos", "Mínimo Ingresos", "Promedio Ingresos")),
+                Exits = fct_relevel(Exits, c("Promedio Salidas", "Mínimo Salidas", "Máximo Salidas"))),
   aes(
     x = Exits,
     y = Entries
@@ -354,6 +364,9 @@ ggplot(
 
 
 ```
+
+La tabla de calor enseña las posibles combinaciones de flujos observados, dividiendo entradas y salidas en promedio, mínimos y máximos. La primera celda arriba la izquierda, por ejemplo, enseña el saldo diario subtrayendo el promedio de salidas al promedio de entradas durante el periodo de observación.
+
 :::
 
 ::: {.column width="20%"}
@@ -384,12 +397,13 @@ max_2 <- c(stock_2024, stock_2024 + (sum(entries_max_2 - exits_min_2) * 365), st
 stock_proj_2 <- data.frame(year, mean_2, min_2, max_2) |> 
   pivot_longer(-1, names_to = "type", values_to = "stock") |> 
   mutate(type = str_sub(type, end = -3)) |> 
-  mutate(year = as.character(year)) 
+  mutate(year = as.character(year)) |> 
+  mutate(type = if_else(type == "mean", "Promedio", if_else(type == "min", "Mínimo", "Máximo")))
 
 
 # Plot
 ggplot(stock_proj_2 |> 
-         mutate(type = fct_relevel(type, c("mean", "min", "max")),
+         mutate(type = fct_relevel(type, c("Promedio", "Mínimo", "Máximo")),
                 year = fct_relevel(year, c("2026", "2025", "2024")))) +
   geom_col(aes(
     x = type,
