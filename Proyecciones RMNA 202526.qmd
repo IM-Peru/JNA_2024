@@ -24,24 +24,32 @@ fecha_2 <- "2023-04-01"
 # Stock for 2024
 stock_2024 <- 1542004
 
-# Calculation for Date 1
-data_1 <- data |> 
-  mutate(Fecha = paste(Mes, "-01", sep="")) |> 
-  mutate(Fecha = as.Date(Fecha)) |> 
-  filter(Fecha >= fecha_1) |> 
-  select(Mes:"IrregularesTOTALSalidas") |> 
-  group_by(Nacionalidad) |> 
-  summarize(across(contains("egulare"), list(mean = ~mean(., na.rm = TRUE), min = ~min(., na.rm = TRUE), max = ~max(., na.rm = TRUE)), .names = "{.col}_{.fn}")) |> 
-  pivot_longer(-1, names_to = c("Tipo", "Calc"), names_sep = "_", values_to = "Tot") |> 
-  mutate(Tot = round(Tot, 0)) |> 
-  ungroup() |> 
-  filter(!grepl('DTM', Tipo)) |> 
-  pivot_wider(names_from = Calc, values_from = Tot) |> 
-  mutate(Flujo = if_else(str_detect(Tipo, "Regulares"), "Regulares", "Irregulares")) |> 
-  mutate(Punto = if_else(str_detect(Tipo, "Tumbes"), "Tumbes", if_else(str_detect(Tipo, "Tacna"), "Tacna", if_else(str_detect(Tipo, "Puno"), "Puno", if_else(str_detect(Tipo, "Madre"), "MdD", if_else(str_detect(Tipo, "Aeropuerto"), "Aeropuerto", if_else(str_detect(Tipo, "otros"), "Otros", "Total"))))))) |>
-  mutate(Direct = if_else(str_detect(Tipo, "Entradas"), "Entradas", "Salidas")) |> 
-  select(Nacionalidad, Punto, Flujo, Direct, mean, min, max) |> 
+data_1 <- data |>
+  mutate(Fecha = paste(Mes, "-01", sep="")) |>
+  mutate(Fecha = as.Date(Fecha)) |>
+  filter(Fecha >= fecha_1) |>
+  select(Mes:"IrregularesTOTALSalidas") |>
+  group_by(Nacionalidad) |>
+  summarize(across(contains("egulare"), list(mean = ~mean(., na.rm = TRUE),
+                                             min = ~min(., na.rm = TRUE),
+                                             max = ~max(., na.rm = TRUE),
+                                             median = ~median(., na.rm = TRUE)), .names = "{.col}_{.fn}")) |>
+  pivot_longer(-1, names_to = c("Tipo", "Calc"), names_sep = "_", values_to = "Tot") |>
+  mutate(Tot = round(Tot, 0)) |>
+  ungroup() |>
+  filter(!grepl('DTM', Tipo)) |>
+  pivot_wider(names_from = Calc, values_from = Tot) |>
+  mutate(Flujo = if_else(str_detect(Tipo, "Regulares"), "Regulares", "Irregulares")) |>
+  mutate(Punto = if_else(str_detect(Tipo, "Tumbes"), "Tumbes", 
+                         if_else(str_detect(Tipo, "Tacna"), "Tacna", 
+                                 if_else(str_detect(Tipo, "Puno"), "Puno", 
+                                         if_else(str_detect(Tipo, "Madre"), "MdD", 
+                                                 if_else(str_detect(Tipo, "Aeropuerto"), "Aeropuerto", 
+                                                         if_else(str_detect(Tipo, "otros"), "Otros", "Total"))))))) |>
+  mutate(Direct = if_else(str_detect(Tipo, "Entradas"), "Entradas", "Salidas")) |>
+  select(Nacionalidad, Punto, Flujo, Direct, mean, min, max, median) |>
   filter(Nacionalidad == "VEN")
+
 
 data_1 <- lapply(data_1, function(x) {
   x[is.infinite(x)] <- NA
@@ -54,23 +62,33 @@ data_1 <- data_1[complete.cases(data_1), ]
 
 
 # Cálculo escenarios desde Fecha 2
-data_2 <- data |> 
-  mutate(Fecha = paste(Mes, "-01", sep="")) |> 
-  mutate(Fecha = as.Date(Fecha)) |> 
-  filter(Fecha >= fecha_2) |> 
-  select(Mes:"IrregularesTOTALSalidas") |> 
-  group_by(Nacionalidad) |> 
-  summarize(across(contains("egulare"), list(mean = ~mean(., na.rm = TRUE), min = ~min(., na.rm = TRUE), max = ~max(., na.rm = TRUE)), .names = "{.col}_{.fn}")) |> 
-  pivot_longer(-1, names_to = c("Tipo", "Calc"), names_sep = "_", values_to = "Tot") |> 
-  mutate(Tot = round(Tot, 0)) |> 
-  ungroup() |> 
-  filter(!grepl('DTM', Tipo)) |> 
-  pivot_wider(names_from = Calc, values_from = Tot) |> 
-  mutate(Flujo = if_else(str_detect(Tipo, "Regulares"), "Regulares", "Irregulares")) |> 
-  mutate(Punto = if_else(str_detect(Tipo, "Tumbes"), "Tumbes", if_else(str_detect(Tipo, "Tacna"), "Tacna", if_else(str_detect(Tipo, "Puno"), "Puno", if_else(str_detect(Tipo, "Madre"), "MdD", if_else(str_detect(Tipo, "Aeropuerto"), "Aeropuerto", if_else(str_detect(Tipo, "otros"), "Otros", "Total"))))))) |>
-  mutate(Direct = if_else(str_detect(Tipo, "Entradas"), "Entradas", "Salidas")) |> 
-  select(Nacionalidad, Punto, Flujo, Direct, mean, min, max) |> 
+
+data_2 <- data |>
+  mutate(Fecha = paste(Mes, "-01", sep="")) |>
+  mutate(Fecha = as.Date(Fecha)) |>
+  filter(Fecha >= fecha_2) |>
+  select(Mes:"IrregularesTOTALSalidas") |>
+  group_by(Nacionalidad) |>
+  summarize(across(contains("egulare"), list(mean = ~mean(., na.rm = TRUE),
+                                             min = ~min(., na.rm = TRUE),
+                                             max = ~max(., na.rm = TRUE),
+                                             median = ~median(., na.rm = TRUE)), .names = "{.col}_{.fn}")) |>
+  pivot_longer(-1, names_to = c("Tipo", "Calc"), names_sep = "_", values_to = "Tot") |>
+  mutate(Tot = round(Tot, 0)) |>
+  ungroup() |>
+  filter(!grepl('DTM', Tipo)) |>
+  pivot_wider(names_from = Calc, values_from = Tot) |>
+  mutate(Flujo = if_else(str_detect(Tipo, "Regulares"), "Regulares", "Irregulares")) |>
+  mutate(Punto = if_else(str_detect(Tipo, "Tumbes"), "Tumbes", 
+                         if_else(str_detect(Tipo, "Tacna"), "Tacna", 
+                                 if_else(str_detect(Tipo, "Puno"), "Puno", 
+                                         if_else(str_detect(Tipo, "Madre"), "MdD", 
+                                                 if_else(str_detect(Tipo, "Aeropuerto"), "Aeropuerto", 
+                                                         if_else(str_detect(Tipo, "otros"), "Otros", "Total"))))))) |>
+  mutate(Direct = if_else(str_detect(Tipo, "Entradas"), "Entradas", "Salidas")) |>
+  select(Nacionalidad, Punto, Flujo, Direct, mean, min, max, median) |>
   filter(Nacionalidad == "VEN")
+
 
 data_2 <- lapply(data_2, function(x) {
   x[is.infinite(x)] <- NA
@@ -104,44 +122,65 @@ saldo <- function(direction, var){
 entries_mean_1 <- saldo("Entradas", mean) / 30
 entries_min_1 <- saldo("Entradas", min) / 30
 entries_max_1 <- saldo("Entradas", max) / 30
+entries_max_1 <- saldo("Entradas", max) / 30
+entries_median_1 <- saldo("Entradas", median) / 30
 
 exits_mean_1 <- saldo("Salidas", mean) / 30
 exits_min_1 <- saldo("Salidas", min) / 30
 exits_max_1 <- saldo("Salidas", max) / 30
+exits_median_1 <- saldo("Salidas", median) / 30
+
 
 # entries <- list(mean_1 = entries_mean_1, min_1 = entries_min_1, max_1 = entries_max_1)
 # exits <- list(mean_1 = exits_mean_1, min_1 = exits_min_1, max_1 = exits_max_1)
 
-result_matrix <- matrix(nrow = 3, ncol = 3)
-rownames(result_matrix) <- c("entries_mean_1", "entries_min_1", "entries_max_1")
-colnames(result_matrix) <- c("exits_mean_1", "exits_min_1", "exits_max_1")
+result_matrix <- matrix(nrow = 4, ncol = 4)
+rownames(result_matrix) <- c("entries_mean_1", "entries_min_1", "entries_max_1", "entries_median_1")
+colnames(result_matrix) <- c("exits_mean_1", "exits_min_1", "exits_max_1", "exits_median_1")
 
 result_matrix["entries_mean_1", "exits_mean_1"] <- entries_mean_1 - exits_mean_1
 result_matrix["entries_mean_1", "exits_min_1"]  <- entries_mean_1 - exits_min_1
 result_matrix["entries_mean_1", "exits_max_1"]  <- entries_mean_1 - exits_max_1
+result_matrix["entries_mean_1", "exits_median_1"]  <- entries_mean_1 - exits_median_1
 
 result_matrix["entries_min_1", "exits_mean_1"]  <- entries_min_1 - exits_mean_1
 result_matrix["entries_min_1", "exits_min_1"]   <- entries_min_1 - exits_min_1
 result_matrix["entries_min_1", "exits_max_1"]   <- entries_min_1 - exits_max_1
+result_matrix["entries_min_1", "exits_median_1"]   <- entries_min_1 - exits_median_1
+
 
 result_matrix["entries_max_1", "exits_mean_1"]  <- entries_max_1 - exits_mean_1
 result_matrix["entries_max_1", "exits_min_1"]   <- entries_max_1 - exits_min_1
 result_matrix["entries_max_1", "exits_max_1"]   <- entries_max_1 - exits_max_1
+result_matrix["entries_max_1", "exits_median_1"]   <- entries_max_1 - exits_median_1
+
+result_matrix["entries_median_1", "exits_mean_1"]  <- entries_median_1 - exits_mean_1
+result_matrix["entries_median_1", "exits_min_1"]   <- entries_median_1 - exits_min_1
+result_matrix["entries_median_1", "exits_max_1"]   <- entries_median_1 - exits_max_1
+result_matrix["entries_median_1", "exits_median_1"]   <- entries_median_1 - exits_median_1
+
+
 
 saldo_diario <- as.data.frame(as.table(result_matrix)) |> 
   mutate(across(Freq,\(x) round(x, 0))) |> 
   rename(Entries = Var1) |> 
-  rename(Exits = Var2) |> 
-  mutate(Entries = if_else(Entries == "entries_max_1", "Máximo Ingresos", if_else(Entries == "entries_min_1", "Mínimo Ingresos", "Promedio Ingresos"))) |> 
-  mutate(Exits = if_else(Exits == "exits_max_1", "Máximo Salidas", if_else(Exits == "exits_min_1", "Mínimo Salidas", "Promedio Salidas")))
+  rename(Exits = Var2)|>
+  mutate(Entries = if_else(Entries == "entries_max_1", "Máximo Ingresos", 
+                           if_else(Entries == "entries_min_1", "Mínimo Ingresos", 
+                                   if_else(Entries == "entries_mean_1", "Promedio Ingresos",
+                                   "Ingresos Medianos")))) |> 
+  mutate(Exits = if_else(Exits == "exits_max_1", "Máximo Salidas", 
+                         if_else(Exits == "exits_min_1", "Mínimo Salidas", 
+                                  if_else(Exits == "exits_mean_1", "Promedio Salidas", 
+                                 "Salidas Medianas"))))
 
 
 #print(result_matrix)
 
 ggplot(
   saldo_diario |> 
-    mutate(Entries = fct_relevel(Entries, c("Máximo Ingresos", "Mínimo Ingresos", "Promedio Ingresos")),
-                Exits = fct_relevel(Exits, c("Promedio Salidas", "Mínimo Salidas", "Máximo Salidas"))),
+    mutate(Entries = fct_relevel(Entries, c("Máximo Ingresos", "Mínimo Ingresos", "Ingresos Medianos", "Promedio Ingresos")),
+                Exits = fct_relevel(Exits, c("Promedio Salidas", "Mínimo Salidas", "Máximo Salidas", "Salidas Medianas"))),
   aes(
     x = Exits,
     y = Entries
@@ -184,7 +223,10 @@ ggplot(
 
 ```
 
-La tabla de calor enseña las posibles combinaciones de flujos observados, dividiendo entradas y salidas en promedio, mínimos y máximos. La primera celda arriba la izquierda, por ejemplo, enseña el saldo diario subtrayendo el promedio de salidas al promedio de entradas durante el periodo de observación.
+La tabla de calor muestra todas las posibles combinaciones de los saldos según los flujos observados en los meses de 2024. Estos saldos han sido calculados utilizando los valores máximos, mínimos, promedio y mediano. Por ejemplo, la primera celda arriba la izquierda enseña el saldo diario restando el promedio de salidas al promedio de entradas durante el periodo señalado.
+
+En este sentido se han planteado 3 escenarios posibles: (1) En el primer escenario se plantea un mínimo de ingresos y un máximo de salidas al país. (2) En el segundo escenario se da un resultado status quo, representado por las entradas y salidas promedio o medianas. (3) En el tercer escenario, se plantea un máximo de ingresos y un mínimo de salidas al país. 
+
 
 :::
 
@@ -203,26 +245,35 @@ La tabla de calor enseña las posibles combinaciones de flujos observados, divid
  \
 
 **`r round(sum(entries_min_1 - exits_max_1), 0)`** <br/> Saldo mínimo (`r format(round(sum(entries_min_1 - exits_max_1), 0)*365, big.mark = ",")` anual)
-:::
-:::
 
+ \
+
+**`r round(sum(entries_median_1 - exits_median_1), 0)`** <br/> Saldo mediano (`r format(round(sum(entries_median_1 - exits_median_1), 0)*365, big.mark = ",")` anual)
+:::
+:::
 ```{r, echo = FALSE, warning = FALSE}
 
 year <- c(2024, 2025, 2026)
 mean_1 <- c(stock_2024, stock_2024 + (sum(entries_mean_1 - exits_mean_1) * 365), stock_2024 + ((sum(entries_mean_1 - exits_mean_1) * 365))*2)
 min_1 <- c(stock_2024, stock_2024 + (sum(entries_min_1 - exits_max_1) * 365), stock_2024 + ((sum(entries_min_1 - exits_max_1) * 365))*2)
 max_1 <- c(stock_2024, stock_2024 + (sum(entries_max_1 - exits_min_1) * 365), stock_2024 + ((sum(entries_max_1 - exits_min_1) * 365))*2)
+median_1 <- c(stock_2024, stock_2024 + (sum(entries_median_1 - exits_median_1) * 365), stock_2024 + ((sum(entries_median_1 - exits_median_1) * 365))*2)
 
-stock_proj_1 <- data.frame(year, mean_1, min_1, max_1) |> 
+
+stock_proj_1 <- data.frame(year, mean_1, min_1, max_1, median_1) |> 
   pivot_longer(-1, names_to = "type", values_to = "stock") |> 
   mutate(type = str_sub(type, end = -3)) |> 
-  mutate(year = as.character(year)) |> 
-  mutate(type = if_else(type == "mean", "Promedio", if_else(type == "min", "Mínimo", "Máximo")))
+  mutate(year = as.character(year)) |>
+  mutate(type = if_else(type == "mean", "Promedio", 
+                        if_else(type == "min", "Mínimo", 
+                               if_else(type == "max", "Máximo", 
+                                "Mediana"))))
+
 
 
 # Plot
 ggplot(stock_proj_1 |> 
-         mutate(type = fct_relevel(type, c("Promedio", "Mínimo", "Máximo")),
+         mutate(type = fct_relevel(type, c("Mínimo", "Promedio", "Mediana", "Máximo")),
                 year = fct_relevel(year, c("2026", "2025", "2024")))) +
   geom_col(aes(
     x = type,
@@ -285,44 +336,62 @@ saldo <- function(direction, var){
 entries_mean_2 <- saldo("Entradas", mean) / 30
 entries_min_2 <- saldo("Entradas", min) / 30
 entries_max_2 <- saldo("Entradas", max) / 30
+entries_median_2 <- saldo("Entradas", median) / 30
+
 
 exits_mean_2 <- saldo("Salidas", mean) / 30
 exits_min_2 <- saldo("Salidas", min) / 30
 exits_max_2 <- saldo("Salidas", max) / 30
+exits_median_2 <- saldo("Salidas", median) / 30
 
 # entries <- list(mean_2 = entries_mean_2, min_2 = entries_min_2, max_2 = entries_max_2)
 # exits <- list(mean_2 = exits_mean_2, min_2 = exits_min_2, max_2 = exits_max_2)
 
-result_matrix <- matrix(nrow = 3, ncol = 3)
-rownames(result_matrix) <- c("entries_mean_2", "entries_min_2", "entries_max_2")
-colnames(result_matrix) <- c("exits_mean_2", "exits_min_2", "exits_max_2")
+result_matrix <- matrix(nrow = 4, ncol = 4)
+rownames(result_matrix) <- c("entries_mean_2", "entries_min_2", "entries_max_2", "entries_median_2")
+colnames(result_matrix) <- c("exits_mean_2", "exits_min_2", "exits_max_2", "exits_median_2")
 
 result_matrix["entries_mean_2", "exits_mean_2"] <- entries_mean_2 - exits_mean_2
 result_matrix["entries_mean_2", "exits_min_2"]  <- entries_mean_2 - exits_min_2
 result_matrix["entries_mean_2", "exits_max_2"]  <- entries_mean_2 - exits_max_2
+result_matrix["entries_mean_2", "exits_median_2"]  <- entries_mean_2 - exits_median_2
+
 
 result_matrix["entries_min_2", "exits_mean_2"]  <- entries_min_2 - exits_mean_2
 result_matrix["entries_min_2", "exits_min_2"]   <- entries_min_2 - exits_min_2
 result_matrix["entries_min_2", "exits_max_2"]   <- entries_min_2 - exits_max_2
+result_matrix["entries_min_2", "exits_median_2"]   <- entries_min_2 - exits_median_2
 
 result_matrix["entries_max_2", "exits_mean_2"]  <- entries_max_2 - exits_mean_2
 result_matrix["entries_max_2", "exits_min_2"]   <- entries_max_2 - exits_min_2
 result_matrix["entries_max_2", "exits_max_2"]   <- entries_max_2 - exits_max_2
+result_matrix["entries_max_2", "exits_median_2"]   <- entries_max_2 - exits_median_2
+
+result_matrix["entries_median_2", "exits_mean_2"]  <- entries_median_2 - exits_mean_2
+result_matrix["entries_median_2", "exits_min_2"]   <- entries_median_2 - exits_min_2
+result_matrix["entries_median_2", "exits_max_2"]   <- entries_median_2 - exits_max_2
+result_matrix["entries_median_2", "exits_median_2"]   <- entries_median_2 - exits_median_2
+
 
 saldo_diario <- as.data.frame(as.table(result_matrix)) |> 
   mutate(across(Freq,\(x) round(x, 0))) |> 
   rename(Entries = Var1) |> 
-  rename(Exits = Var2) |> 
-  mutate(Entries = if_else(Entries == "entries_max_2", "Máximo Ingresos", if_else(Entries == "entries_min_2", "Mínimo Ingresos", "Promedio Ingresos"))) |> 
-  mutate(Exits = if_else(Exits == "exits_max_2", "Máximo Salidas", if_else(Exits == "exits_min_2", "Mínimo Salidas", "Promedio Salidas")))
-
+  rename(Exits = Var2)|>
+  mutate(Entries = if_else(Entries == "entries_max_2", "Máximo Ingresos", 
+                           if_else(Entries == "entries_min_2", "Mínimo Ingresos", 
+                                    if_else(Entries == "entries_mean_2", "Promedio Ingresos",
+                                   "Ingresos Medianos")))) |> 
+  mutate(Exits = if_else(Exits == "exits_max_2", "Máximo Salidas", 
+                         if_else(Exits == "exits_min_2", "Mínimo Salidas", 
+                                 if_else(Exits == "exits_mean_2", "Promedio Salidas", 
+                                 "Salidas Medianas"))))
 
 #print(result_matrix)
 
 ggplot(
   saldo_diario |> 
-    mutate(Entries = fct_relevel(Entries, c("Máximo Ingresos", "Mínimo Ingresos", "Promedio Ingresos")),
-                Exits = fct_relevel(Exits, c("Promedio Salidas", "Mínimo Salidas", "Máximo Salidas"))),
+    mutate(Entries = fct_relevel(Entries, c("Máximo Ingresos", "Mínimo Ingresos", "Ingresos Medianos", "Promedio Ingresos")),
+                Exits = fct_relevel(Exits, c("Promedio Salidas", "Mínimo Salidas", "Máximo Salidas", "Salidas Medianas"))),
   aes(
     x = Exits,
     y = Entries
@@ -365,7 +434,9 @@ ggplot(
 
 ```
 
-La tabla de calor enseña las posibles combinaciones de flujos observados, dividiendo entradas y salidas en promedio, mínimos y máximos. La primera celda arriba la izquierda, por ejemplo, enseña el saldo diario subtrayendo el promedio de salidas al promedio de entradas durante el periodo de observación.
+La tabla de calor muestra todas las posibles combinaciones de los saldos según los flujos observados en los meses los últimos 12 meses. Estos saldos han sido calculados utilizando los valores máximos, mínimos, promedio y mediano. Por ejemplo, la primera celda arriba la izquierda enseña el saldo diario restando el promedio de salidas al promedio de entradas durante el periodo señalado.
+
+En este sentido se han planteado 3 escenarios posibles: (1) En el primer escenario se plantea un mínimo de ingresos y un máximo de salidas al país. (2) En el segundo escenario se da un resultado status quo, representado por las entradas y salidas promedio o medianas. (3) En el tercer escenario, se plantea un máximo de ingresos y un mínimo de salidas al país. 
 
 :::
 
@@ -384,6 +455,10 @@ La tabla de calor enseña las posibles combinaciones de flujos observados, divid
  \
 
 **`r round(sum(entries_min_2 - exits_max_2), 0)`** <br/> Saldo mínimo (`r format(round(sum(entries_min_2 - exits_max_2), 0)*365, big.mark = ",")` anual)
+
+ \
+
+**`r round(sum(entries_median_2 - exits_median_2), 0)`** <br/> Saldo mediano (`r format(round(sum(entries_median_2 - exits_median_2), 0)*365, big.mark = ",")` anual)
 :::
 :::
 
@@ -393,17 +468,22 @@ year <- c(2024, 2025, 2026)
 mean_2 <- c(stock_2024, stock_2024 + (sum(entries_mean_2 - exits_mean_2) * 365), stock_2024 + ((sum(entries_mean_2 - exits_mean_2) * 365))*2)
 min_2 <- c(stock_2024, stock_2024 + (sum(entries_min_2 - exits_max_2) * 365), stock_2024 + ((sum(entries_min_2 - exits_max_2) * 365))*2)
 max_2 <- c(stock_2024, stock_2024 + (sum(entries_max_2 - exits_min_2) * 365), stock_2024 + ((sum(entries_max_2 - exits_min_2) * 365))*2)
+median_2 <- c(stock_2024, stock_2024 + (sum(entries_median_2 - exits_median_2) * 365), stock_2024 + ((sum(entries_median_2 - exits_median_2) * 365))*2)
 
-stock_proj_2 <- data.frame(year, mean_2, min_2, max_2) |> 
+stock_proj_2 <- data.frame(year, mean_2, min_2, max_2, median_2) |> 
   pivot_longer(-1, names_to = "type", values_to = "stock") |> 
   mutate(type = str_sub(type, end = -3)) |> 
-  mutate(year = as.character(year)) |> 
-  mutate(type = if_else(type == "mean", "Promedio", if_else(type == "min", "Mínimo", "Máximo")))
+  mutate(year = as.character(year)) |>
+   mutate(type = if_else(type == "mean", "Promedio", 
+                         if_else(type == "min", "Mínimo", 
+                                 if_else(type == "max", "Máximo",
+                                 "Mediana"))))
+
 
 
 # Plot
 ggplot(stock_proj_2 |> 
-         mutate(type = fct_relevel(type, c("Promedio", "Mínimo", "Máximo")),
+         mutate(type = fct_relevel(type, c("Mínimo", "Promedio","Mediana","Máximo")),
                 year = fct_relevel(year, c("2026", "2025", "2024")))) +
   geom_col(aes(
     x = type,
