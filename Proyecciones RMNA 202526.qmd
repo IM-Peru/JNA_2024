@@ -102,12 +102,12 @@ data_2 <- data_2[complete.cases(data_2), ]
 
 ```
 
-## Saldo v1: Flujos 2024
+## Saldo Escenario 1: Flujos 2024
 
 Fecha de referencia: desde `r fecha_1` a 2024-04-31
 
 ::: columns
-::: {.column width="80%"}
+::: {.column width="60%"}
 ```{r, echo = FALSE, warning = FALSE}
 
 saldo <- function(direction, var){
@@ -180,7 +180,7 @@ saldo_diario <- as.data.frame(as.table(result_matrix)) |>
 ggplot(
   saldo_diario |> 
     mutate(Entries = fct_relevel(Entries, c("Máximo Ingresos", "Mínimo Ingresos", "Ingresos Medianos", "Promedio Ingresos")),
-                Exits = fct_relevel(Exits, c("Promedio Salidas", "Mínimo Salidas", "Máximo Salidas", "Salidas Medianas"))),
+                Exits = fct_relevel(Exits, c("Promedio Salidas", "Salidas Medianas", "Mínimo Salidas", "Máximo Salidas"))),
   aes(
     x = Exits,
     y = Entries
@@ -223,24 +223,15 @@ ggplot(
 
 ```
 
-La tabla de calor muestra todas las posibles combinaciones de los saldos según los flujos observados en los meses de 2024. Estos saldos han sido calculados utilizando los valores máximos, mínimos, promedio y mediano. Por ejemplo, la primera celda arriba la izquierda enseña el saldo diario restando el promedio de salidas al promedio de entradas durante el periodo señalado.
-
-En este sentido se han planteado 3 escenarios posibles: (1) En el primer escenario se plantea un mínimo de ingresos y un máximo de salidas al país. (2) En el segundo escenario se da un resultado status quo, representado por las entradas y salidas promedio o medianas. (3) En el tercer escenario, se plantea un máximo de ingresos y un mínimo de salidas al país. 
-
-
 :::
 
 ::: {.column width="20%"}
  \
-
 **Rangos:**  \
  \
 
 **`r round(sum(entries_max_1 - exits_min_1), 0)`** <br/> Saldo máximo <br/> (`r format(round(sum(entries_max_1 - exits_min_1), 0)*365, big.mark = ",")` anual)
 
- \
-
-**`r round(sum(entries_mean_1 - exits_mean_1), 0)`** <br/> Saldo promedio <br/> (`r format(round(sum(entries_mean_1 - exits_mean_1), 0)*365, big.mark = ",")` anual)
 
  \
 
@@ -248,10 +239,28 @@ En este sentido se han planteado 3 escenarios posibles: (1) En el primer escenar
 
  \
 
+:::
+
+::: {.column width="20%"}
+ \
+**Status quo:**  \
+ \
+
+**`r round(sum(entries_mean_1 - exits_mean_1), 0)`** <br/> Saldo promedio <br/> (`r format(round(sum(entries_mean_1 - exits_mean_1), 0)*365, big.mark = ",")` anual)
+
+
+ \
+
 **`r round(sum(entries_median_1 - exits_median_1), 0)`** <br/> Saldo mediano (`r format(round(sum(entries_median_1 - exits_median_1), 0)*365, big.mark = ",")` anual)
 :::
+
 :::
-```{r, echo = FALSE, warning = FALSE}
+
+La tabla de calor muestra las posibles combinaciones de los saldos según los flujos observados en los meses de 2024, calculados utilizando los valores máximos, mínimos, promedio y mediano. Por ejemplo, la primera celda arriba la izquierda enseña el saldo diario restando el promedio de salidas al promedio de entradas durante el periodo señalado.
+
+En este sentido se consideran que los rangos de proyecciones se pueden categorizar entre (1) un **saldo máximo**, donde se plantea un máximo de ingresos y un mínimo de salidas al país y (2) un **saldo mínimo**, en el cual se considera un mínimo de ingresos y un máximo de salidas al país . Entre ellos, se puede estimar un **resultado status quo**, representado por las entradas y salidas promedio o medianas.
+
+```{r, echo = FALSE, warning = FALSE, fig.height = 3.5, fig.width = 8}
 
 year <- c(2024, 2025, 2026)
 mean_1 <- c(stock_2024, stock_2024 + (sum(entries_mean_1 - exits_mean_1) * 365), stock_2024 + ((sum(entries_mean_1 - exits_mean_1) * 365))*2)
@@ -273,7 +282,7 @@ stock_proj_1 <- data.frame(year, mean_1, min_1, max_1, median_1) |>
 
 # Plot
 ggplot(stock_proj_1 |> 
-         mutate(type = fct_relevel(type, c("Mínimo", "Promedio", "Mediana", "Máximo")),
+         mutate(type = fct_relevel(type, c("Máximo", "Mínimo", "Promedio", "Mediana")),
                 year = fct_relevel(year, c("2026", "2025", "2024")))) +
   geom_col(aes(
     x = type,
@@ -316,12 +325,12 @@ ggplot(stock_proj_1 |>
 
 ```
 
-## Saldo v2: Últimos 12 meses
+## Saldo Escenario 2: Últimos 12 meses
 
 Fecha de referencia: desde `r fecha_2` a 2024-04-31
 
 ::: columns
-::: {.column width="80%"}
+::: {.column width="60%"}
 ```{r, echo = FALSE, warning = FALSE}
 
 saldo <- function(direction, var){
@@ -434,23 +443,15 @@ ggplot(
 
 ```
 
-La tabla de calor muestra todas las posibles combinaciones de los saldos según los flujos observados en los meses los últimos 12 meses. Estos saldos han sido calculados utilizando los valores máximos, mínimos, promedio y mediano. Por ejemplo, la primera celda arriba la izquierda enseña el saldo diario restando el promedio de salidas al promedio de entradas durante el periodo señalado.
-
-En este sentido se han planteado 3 escenarios posibles: (1) En el primer escenario se plantea un mínimo de ingresos y un máximo de salidas al país. (2) En el segundo escenario se da un resultado status quo, representado por las entradas y salidas promedio o medianas. (3) En el tercer escenario, se plantea un máximo de ingresos y un mínimo de salidas al país. 
-
 :::
 
 ::: {.column width="20%"}
  \
-
 **Rangos:**  \
  \
 
 **`r round(sum(entries_max_2 - exits_min_2), 0)`** <br/> Saldo máximo <br/> (`r format(round(sum(entries_max_2 - exits_min_2), 0)*365, big.mark = ",")` anual)
 
- \
-
-**`r round(sum(entries_mean_2 - exits_mean_2), 0)`** <br/> Saldo promedio <br/> (`r format(round(sum(entries_mean_2 - exits_mean_2), 0)*365, big.mark = ",")` anual)
 
  \
 
@@ -458,11 +459,27 @@ En este sentido se han planteado 3 escenarios posibles: (1) En el primer escenar
 
  \
 
-**`r round(sum(entries_median_2 - exits_median_2), 0)`** <br/> Saldo mediano (`r format(round(sum(entries_median_2 - exits_median_2), 0)*365, big.mark = ",")` anual)
-:::
 :::
 
-```{r, echo = FALSE, warning = FALSE}
+::: {.column width="20%"}
+ \
+**Status quo:**  \
+ \
+
+**`r round(sum(entries_mean_2 - exits_mean_2), 0)`** <br/> Saldo promedio <br/> (`r format(round(sum(entries_mean_2 - exits_mean_2), 0)*365, big.mark = ",")` anual)
+
+
+ \
+
+**`r round(sum(entries_median_2 - exits_median_2), 0)`** <br/> Saldo mediano (`r format(round(sum(entries_median_2 - exits_median_2), 0)*365, big.mark = ",")` anual)
+:::
+
+:::
+
+La tabla de calor muestra las posibles combinaciones de los saldos según los flujos observados en los meses de 2024, calculados utilizando los valores máximos, mínimos, promedio y mediano. Por ejemplo, la primera celda arriba la izquierda enseña el saldo diario restando el promedio de salidas al promedio de entradas durante el periodo señalado.
+
+En este sentido se consideran que los rangos de proyecciones se pueden categorizar entre (1) un **saldo máximo**, donde se plantea un máximo de ingresos y un mínimo de salidas al país y (2) un **saldo mínimo**, en el cual se considera un mínimo de ingresos y un máximo de salidas al país . Entre ellos, se puede estimar un **resultado status quo**, representado por las entradas y salidas promedio o medianas.
+```{r, echo = FALSE, warning = FALSE, fig.height = 3.5, fig.width = 8}
 
 year <- c(2024, 2025, 2026)
 mean_2 <- c(stock_2024, stock_2024 + (sum(entries_mean_2 - exits_mean_2) * 365), stock_2024 + ((sum(entries_mean_2 - exits_mean_2) * 365))*2)
@@ -483,7 +500,7 @@ stock_proj_2 <- data.frame(year, mean_2, min_2, max_2, median_2) |>
 
 # Plot
 ggplot(stock_proj_2 |> 
-         mutate(type = fct_relevel(type, c("Mínimo", "Promedio","Mediana","Máximo")),
+         mutate(type = fct_relevel(type, c("Máximo", "Mínimo", "Promedio","Mediana")),
                 year = fct_relevel(year, c("2026", "2025", "2024")))) +
   geom_col(aes(
     x = type,
