@@ -11,7 +11,7 @@ library(unhcrthemes)
 library(scales)
  
 # Source: Movements Report
-data <- read.csv("Movement_Report.csv") 
+data <- read.csv("https://raw.githubusercontent.com/IM-Peru/JNA_2024/main/Movement_Report.csv") 
 
 data$Mes <- gsub(" ", "", data$Mes)
 
@@ -25,6 +25,7 @@ fecha_2 <- "2023-04-01"
 stock_2024 <- 1542004
 
 data_1 <- data |>
+  filter(Nacionalidad == "VEN") |> 
   mutate(Fecha = paste(Mes, "-01", sep="")) |>
   mutate(Fecha = as.Date(Fecha)) |>
   filter(Fecha >= fecha_1) |>
@@ -47,8 +48,8 @@ data_1 <- data |>
                                                  if_else(str_detect(Tipo, "Aeropuerto"), "Aeropuerto", 
                                                          if_else(str_detect(Tipo, "otros"), "Otros", "Total"))))))) |>
   mutate(Direct = if_else(str_detect(Tipo, "Entradas"), "Entradas", "Salidas")) |>
-  select(Nacionalidad, Punto, Flujo, Direct, mean, min, max, median) |>
-  filter(Nacionalidad == "VEN")
+  select(Nacionalidad, Punto, Flujo, Direct, mean, min, max, median)
+  
 
 
 data_1 <- lapply(data_1, function(x) {
@@ -111,7 +112,7 @@ Fecha de referencia: desde `r fecha_1` a 2024-04-31
 ```{r, echo = FALSE, warning = FALSE}
 
 saldo <- function(direction, var){
-  result = data_1 |> 
+    result = data_1 |> 
     filter(Direct == direction) |>
     select(Direct, {{ var }}) |> 
     group_by(Direct) |> 
@@ -542,3 +543,14 @@ ggplot(stock_proj_2 |>
 
 
 ```
+
+
+## Propuesta de Proyecciones 2025-26 - Equipo IM
+
+Considerando estos elementos, el equipo de Manejo de Información propone las proyecciones siguientes:
+
+
+
+
+
+
