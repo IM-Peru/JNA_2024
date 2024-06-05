@@ -113,6 +113,7 @@ Fecha de referencia: desde `r fecha_1` a 2024-04-31
 
 saldo <- function(direction, var){
     result = data_1 |> 
+    filter(Punto != "Total") |> 
     filter(Direct == direction) |>
     select(Direct, {{ var }}) |> 
     group_by(Direct) |> 
@@ -336,6 +337,7 @@ Fecha de referencia: desde `r fecha_2` a 2024-04-31
 
 saldo <- function(direction, var){
   result = data_2 |> 
+    filter(Punto != "Total") |> 
     filter(Direct == direction) |>
     select(Direct, {{ var }}) |> 
     group_by(Direct) |> 
@@ -545,12 +547,150 @@ ggplot(stock_proj_2 |>
 ```
 
 
+<br/>
+<br/>
+<br/>
+
 ## Propuesta de Proyecciones 2025-26 - Equipo IM
 
 Considerando estos elementos, el equipo de Manejo de Información propone las proyecciones siguientes:
 
+::: {.column width="30%"}
+
+<center>
+
+**`r round(sum(entries_mean_2 - exits_mean_2), 0)`** <br/> Saldo proyectado <br/> (`r format(round(sum(entries_mean_2 - exits_mean_2), 0)*365, big.mark = ",")` anual)
+
+</center>
+
+:::
+
+::: {.column width="30%"}
+
+<center>
+
+**`r format(round(stock_2024 + (sum(entries_mean_2 - exits_mean_2) * 365), 0), big.mark = ",")`** <br/> Stock 2025 <br/> 
+
+</center>
+
+:::
+
+::: {.column width="30%"}
+
+<center>
+
+**`r format(round(stock_2024 + ((sum(entries_mean_2 - exits_mean_2) * 365)) * 2, 0), big.mark = ",")`** <br/> Stock 2026 <br/> 
+
+</center>
+
+:::
+
+
+Esta proyección utiliza el saldo promedio de ingresos y salidas observados entre abril 2023 y abril 2024 y presupone un stock constante en 2024 de 1.54M de perasonas venezolanas. Los flujos bajo esta proyección serían los siguientes:
 
 
 
+::: {.column width="49%" }
 
+<center>
+
+**`r format(round(sum(entries_mean_2), 0), big.mark = ",")`** <br>
+Entradas diarias <br>
+(`r format(round(sum(entries_mean_2), 0)*365, big.mark = ",")` anual)
+
+</center>
+
+::: 
+
+::: {.column width="49%" }
+
+<center>
+
+**`r format(round(sum(exits_mean_2), 0), big.mark = ",")`** <br>
+Salidas diarias <br>
+(`r format(round(sum(exits_mean_2), 0)*365, big.mark = ",")` anual)
+
+</center>
+
+::: 
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+
+# Utilizando Promedio de Escenario 2
+data_proyecciones <- data_2 |> 
+  select(Punto, Direct, mean) |> 
+  group_by(Punto, Direct) |> 
+  summarize(mean = sum(mean, na.rm = TRUE)) |> 
+  filter(Punto != "Total") |> 
+  mutate(mean = round(mean / 30 * 365, 0)) |> 
+  pivot_wider(names_from = Direct, values_from = mean) |> 
+  arrange(Punto) |> 
+  mutate(Entradas = format(Entradas, big.mark = ",")) |> 
+  mutate(Salidas = format(Salidas, big.mark = ",")) |> 
+  rename("Entradas anuales" = Entradas) |> 
+  rename("Salidas anuales" = Salidas)
+
+
+entries_mean_2 <- saldo("Entradas", mean) / 30
+
+
+library(kableExtra)
+kable(data_proyecciones, align=rep('r', 5), format = "html")
+```
+
+
+Aplicando esta proyección al stock de población venezolana en Perú en el tiempo, se obtendría lo siguiente:
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE, fig.height = 3.5, fig.width = 8}
+
+stock_2016 <- 8170
+stock_2017 <- 66858
+stock_2018 <- 691565
+stock_2019 <- 863613
+stock_2020 <- 1043460
+stock_2021 <- 1286464
+stock_2022 <- 1493645
+stock_2023 <- 1542004
+stock_2024 <- 1542004
+stock_2025 <- round(stock_2024 + (sum(entries_mean_2 - exits_mean_2) * 365), 0)
+stock_2026 <- round(stock_2024 + ((sum(entries_mean_2 - exits_mean_2) * 365)*2), 0)
+
+Stock <- c(stock_2016, stock_2017, stock_2018, stock_2019, stock_2020, stock_2021, stock_2022, stock_2023, stock_2024, stock_2025, stock_2026)
+Stock_year <- c(2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026)
+
+library(tibble)
+
+Stock <- data.frame(Stock_year, Stock) |> 
+  mutate(Stock_year = as.character(Stock_year)) |> 
+  select(Stock_year, Stock) 
+
+
+# Plot
+ggplot(Stock) +
+  geom_col(aes(
+    x = Stock_year,
+    y = Stock
+  ),
+  fill = unhcr_pal(n = 1, "pal_blue"),
+  width = 0.8
+  ) +
+  geom_text(aes(
+    x = Stock_year,
+    y = Stock,
+    label = paste(round(Stock / 1e6, 3), "M", sep = "")
+  ),
+  vjust = -1, size = 8 / .pt
+  ) +
+  labs(
+    title = "Evolución de total poblacional en el tiempo"
+  ) +
+  scale_y_continuous(expand = expansion(c(0, 0.1))) +
+  theme_unhcr(
+    grid = FALSE,
+    axis = "x",
+    axis_title = FALSE,
+    axis_text = "x"
+  )
+
+```
 
