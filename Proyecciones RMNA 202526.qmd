@@ -1,7 +1,8 @@
 ---
-title: "Proyecciones RMNA 2025-26"
+title: "Proyecciones RMNA 2025-26 - GTRM Perú"
 format: html-pdf
 editor: visual
+mainfont: Dosis
 ---
 
 ```{r setup, include = FALSE}
@@ -206,7 +207,7 @@ ggplot(
     labels = scales::label_wrap(3)
   ) +
   scale_fill_stepsn(
-    colors = unhcr_pal(n = 4, "pal_blue"),
+    colors = c("#75B5E4", "#0088CC", "#00649F", "#004469"),
     n.break = 3,
     name = "Saldo diario"
   ) +
@@ -237,7 +238,7 @@ ggplot(
 
  \
 
-**`r round(sum(entries_min_1 - exits_max_1), 0)`** <br/> Saldo mínimo (`r format(round(sum(entries_min_1 - exits_max_1), 0)*365, big.mark = ",")` anual)
+**`r round(sum(entries_min_1 - exits_max_1), 0)`** <br/> Saldo mínimo <br/> (`r format(round(sum(entries_min_1 - exits_max_1), 0)*365, big.mark = ",")` anual)
 
  \
 
@@ -253,7 +254,7 @@ ggplot(
 
  \
 
-**`r round(sum(entries_median_1 - exits_median_1), 0)`** <br/> Saldo mediano (`r format(round(sum(entries_median_1 - exits_median_1), 0)*365, big.mark = ",")` anual)
+**`r round(sum(entries_median_1 - exits_median_1), 0)`** <br/> Saldo mediano <br/> (`r format(round(sum(entries_median_1 - exits_median_1), 0)*365, big.mark = ",")` anual)
 :::
 
 :::
@@ -262,7 +263,7 @@ La tabla de calor muestra las posibles combinaciones de los saldos según los fl
 
 En este sentido se consideran que los rangos de proyecciones se pueden categorizar entre (1) un **saldo máximo**, donde se plantea un máximo de ingresos y un mínimo de salidas al país y (2) un **saldo mínimo**, en el cual se considera un mínimo de ingresos y un máximo de salidas al país . Entre ellos, se puede estimar un **resultado status quo**, representado por las entradas y salidas promedio o medianas.
 
-```{r, echo = FALSE, warning = FALSE, fig.height = 3.5, fig.width = 8}
+```{r, echo = FALSE, warning = FALSE, fig.height = 4.5, fig.width = 8}
 
 year <- c(2024, 2025, 2026)
 mean_1 <- c(stock_2024, stock_2024 + (sum(entries_mean_1 - exits_mean_1) * 365), stock_2024 + ((sum(entries_mean_1 - exits_mean_1) * 365))*2)
@@ -427,7 +428,7 @@ ggplot(
     labels = scales::label_wrap(3)
   ) +
   scale_fill_stepsn(
-    colors = unhcr_pal(n = 4, "pal_blue"),
+    colors = c("#75B5E4", "#0088CC", "#00649F", "#004469"),
     n.break = 3,
     name = "Saldo diario"
   ) +
@@ -458,7 +459,7 @@ ggplot(
 
  \
 
-**`r round(sum(entries_min_2 - exits_max_2), 0)`** <br/> Saldo mínimo (`r format(round(sum(entries_min_2 - exits_max_2), 0)*365, big.mark = ",")` anual)
+**`r round(sum(entries_min_2 - exits_max_2), 0)`** <br/> Saldo mínimo <br/> (`r format(round(sum(entries_min_2 - exits_max_2), 0)*365, big.mark = ",")` anual)
 
  \
 
@@ -474,7 +475,7 @@ ggplot(
 
  \
 
-**`r round(sum(entries_median_2 - exits_median_2), 0)`** <br/> Saldo mediano (`r format(round(sum(entries_median_2 - exits_median_2), 0)*365, big.mark = ",")` anual)
+**`r round(sum(entries_median_2 - exits_median_2), 0)`** <br/> Saldo mediano <br/> (`r format(round(sum(entries_median_2 - exits_median_2), 0)*365, big.mark = ",")` anual)
 :::
 
 :::
@@ -482,7 +483,7 @@ ggplot(
 La tabla de calor muestra las posibles combinaciones de los saldos según los flujos observados en los meses de 2024, calculados utilizando los valores máximos, mínimos, promedio y mediano. Por ejemplo, la primera celda arriba la izquierda enseña el saldo diario restando el promedio de salidas al promedio de entradas durante el periodo señalado.
 
 En este sentido se consideran que los rangos de proyecciones se pueden categorizar entre (1) un **saldo máximo**, donde se plantea un máximo de ingresos y un mínimo de salidas al país y (2) un **saldo mínimo**, en el cual se considera un mínimo de ingresos y un máximo de salidas al país . Entre ellos, se puede estimar un **resultado status quo**, representado por las entradas y salidas promedio o medianas.
-```{r, echo = FALSE, warning = FALSE, fig.height = 3.5, fig.width = 8}
+```{r, echo = FALSE, warning = FALSE, fig.height = 4.5, fig.width = 8}
 
 year <- c(2024, 2025, 2026)
 mean_2 <- c(stock_2024, stock_2024 + (sum(entries_mean_2 - exits_mean_2) * 365), stock_2024 + ((sum(entries_mean_2 - exits_mean_2) * 365))*2)
@@ -548,8 +549,7 @@ ggplot(stock_proj_2 |>
 
 
 <br/>
-<br/>
-<br/>
+
 
 ## Propuesta de Proyecciones 2025-26 - Equipo IM
 
@@ -586,7 +586,7 @@ Considerando estos elementos, el equipo de Manejo de Información propone las pr
 :::
 
 
-Esta proyección utiliza el saldo promedio de ingresos y salidas observados entre abril 2023 y abril 2024 y presupone un stock constante en 2024 de 1.54M de perasonas venezolanas. Los flujos bajo esta proyección serían los siguientes:
+Esta proyección utiliza el saldo promedio de ingresos y salidas observados entre abril 2023 y abril 2024 y presupone un stock constante en 2024 de 1.54M de personas venezolanas. Los flujos bajo esta proyección serían los siguientes:
 
 
 
@@ -658,8 +658,6 @@ stock_2026 <- round(stock_2024 + ((sum(entries_mean_2 - exits_mean_2) * 365)*2),
 Stock <- c(stock_2016, stock_2017, stock_2018, stock_2019, stock_2020, stock_2021, stock_2022, stock_2023, stock_2024, stock_2025, stock_2026)
 Stock_year <- c(2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026)
 
-library(tibble)
-
 Stock <- data.frame(Stock_year, Stock) |> 
   mutate(Stock_year = as.character(Stock_year)) |> 
   select(Stock_year, Stock) 
@@ -671,7 +669,7 @@ ggplot(Stock) +
     x = Stock_year,
     y = Stock
   ),
-  fill = unhcr_pal(n = 1, "pal_blue"),
+  fill = "#00649F",
   width = 0.8
   ) +
   geom_text(aes(
