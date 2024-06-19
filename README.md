@@ -20,4 +20,5 @@ The final dataset after quality checks and consistency procedures has informatio
 
 * Cleaned dataset is available here:
   
-* The dashboard with the results at household and individual indicators is available here:
+* The dashboard with the results at household and individual indicators is available here: https://app.powerbi.com/view?r=eyJrIjoiMGE5N2NlN2EtYTM2Mi00M2Y4LTk0YzctNTRlYzNiYjE0NjZiIiwidCI6ImU1YzM3OTgxLTY2NjQtNDEzNC04YTBjLTY1NDNkMmFmODBiZSIsImMiOjh9
+ 
