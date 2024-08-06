@@ -11,7 +11,7 @@ library(modeest)
 ##### Step 1. Load data #####
 #############################
 
-kobo_setup(url = "https://kobo.unhcr.org",token = xxxx)
+kobo_setup(url = "https://kobo.unhcr.org",token = "881a29d35c1e30a1e0d03ef1fb9c489763933d79")
 
 x <- kobo_submissions("aHP5J4VvRj23sdMABb9HUW")
 
@@ -1498,6 +1498,9 @@ HH <- HH |>
       HT_D1_Q1_first_o == "TRABAJA CON MOVILIDAD ALQUILADA" ~ "5",
       HT_D1_Q1_first_o == "MOTO ALQUILADA" ~ "5",
       HT_D1_Q1_first_o == "No utiliza transporte , porque trabaja desde su hogar" ~ "8",
+      HT_D2_Q1_O == "ALQUILAN LA MOTO PARA TRABAJAR Y SE MOVILIZAN CON ESO" ~ "5",
+      HT_D2_Q1_O == "MOTO QUE ES EL MEDIO DE TRABAJO Y LO UTILIZAN PARA SUS MOVILIDADES PERSONALES" ~ "5", 
+      HT_D2_Q1_O == "TIENE UNA MOTOTAXI" ~ "5",
       TRUE ~ HT_D1_Q1_first),
     HT_D1_Q1_second = case_when(
       HT_D1_Q1_second_o == "TREN ELECTRICO" ~ "8", 
