@@ -85,7 +85,7 @@ ds_per_sector <- weighted_pins_indicator |>
 # and using the 33.3% cutoff to identify those to the right of the distribution.
 # Exclude subsectors - CP, HT and GBV (only calculate intersectoral MPI with 9 dimensions)
 
-df_pin <- ds_per_sector %>%
+df_pin <- ds_per_sector |>
   select(
     id_hogar, id_individual, SECTOR, DEMO_18, HH04, HH07, HH07_months, CARI_FES,CARI_NO_FES,
     Food_security_ds,
@@ -145,8 +145,8 @@ df_pin <- df_pin |>
 #This ensures that, although a person may have all the deprivations in a sector, they will
 #only be part of the MPI if they have more than 33.3% of the total deprivations.
 
-df_sectoral_pin <- df_pin %>%
-  select(-intersector_ds) %>%
+df_sectoral_pin <- df_pin |>
+  select(-intersector_ds) |>
   #include in sectorial pins if included in intersectorial pin (intersector== 1) 
   #and there is a privation in the specific sector (sector_ds>0)
   mutate(across(
