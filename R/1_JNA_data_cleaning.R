@@ -11,7 +11,7 @@ library(modeest)
 ##### Step 1. Load data #####
 #############################
 
-kobo_setup(url = "https://kobo.unhcr.org",token = xx)
+kobo_setup(url = "https://kobo.unhcr.org",token = "881a29d35c1e30a1e0d03ef1fb9c489763933d79")
 
 x <- kobo_submissions("aHP5J4VvRj23sdMABb9HUW")
 
@@ -1788,5 +1788,6 @@ Individual <- Individual |>
 ### Merge household data to individual data by parent index
 main_merged <- left_join(Individual, HH, by = c("_parent_index"="_index")) |>
   rename(id_hogar = "_parent_index") |>
-  rename(id_individual = "_index")
+  rename(id_individual = "_index") 
 
+write_xlsx(main_merged, "main_merged.xlsx")

@@ -2,11 +2,14 @@
 ##### Step 12. PINs Calculation #####
 #####################################
 
-pins_indicator <- main_merged |>
+
+pins_indicator <- final_data |>
   #Select only the previously calculated indicators
   select(
     c(
       id_hogar, id_individual, SECTOR, DEMO_18, HH04, HH07, HH07_months, CARI_FES,
+      # pregnant women
+      NUT_D1_Q1,
       #Food Security
       IND_FS_max,
       #Health
@@ -40,7 +43,13 @@ pins_indicator <- main_merged |>
       IND_EDU_D1_max,
       IND_EDU_D2_max
     )
-  )
+  ) |>
+  mutate(
+    Under_18 = ifelse(HH07 < 18, 1, 0),
+    Women_nut = ifelse(HH04 == "2" & (HH07 <= 50 & HH07 >= 14) & (NUT_D1_Q1 == "1" | NUT_D1_Q1 == "2"), 1, 0),
+    Children_nut = ifelse(HH07 < 5, 1, 0),
+    pobl_nut =ifelse(Women_nut == 1 | Children_nut == 1, 1, 0)
+    )
 
 # read indicators sheet with weights
 
@@ -49,7 +58,16 @@ df_weights <- read_excel("df_weights.xlsx")
 #Multiply each column of pins_indicator by the respective weight in df_weights
 
 weighted_pins_indicator <- pins_indicator |>
-  mutate(across(-c(1:8), ~ . * df_weights$ind_weight_per_sector[match(cur_column(), df_weights$ind_per_sector)]))
+  mutate(across(c(IND_FS_max,
+                  IND_HE_max,
+                  IND_HT_max, 
+                  IND_INT_D1_max, IND_INT_D2_max, IND_INT_D3_max,
+                  IND_NUT_D1, IND_NUT_D2, IND_NUT_D3,
+                  IND_PRO_D1_max, IND_PRO_D2_max, IND_PRO_D3_max, IND_PRO_CP_max, IND_PRO_GBV_max, IND_PRO_HTS_max,
+                  IND_SHE_D1_max, IND_SHE_D2_max, IND_SHE_D3_max,
+                  IND_WA_D1_max, IND_WA_D2_max, IND_WA_D3_max,
+                  IND_EDU_D1_max, IND_EDU_D2_max), ~ . * 
+                  df_weights$ind_weight_per_sector[match(cur_column(), df_weights$ind_per_sector)]))
 
 #Calculate sectorial deprivation score ds suming weighted indicators per sector
 
@@ -62,6 +80,8 @@ ds_per_sector <- weighted_pins_indicator |>
                                                          "IND_INT_D3_max")], na.rm = TRUE),
     Nutrition_ds = rowSums(weighted_pins_indicator[, c("IND_NUT_D1","IND_NUT_D2", 
                                                        "IND_NUT_D3" )], na.rm = TRUE),
+    Nutrition_ds_women = rowSums(weighted_pins_indicator[, c("IND_NUT_D1" )], na.rm = TRUE),
+    Nutrition_ds_baby = rowSums(weighted_pins_indicator[, c("IND_NUT_D2", "IND_NUT_D3" )], na.rm = TRUE),
     Protection_ds = rowSums(weighted_pins_indicator[, c("IND_PRO_D1_max", "IND_PRO_D2_max",
                                                         "IND_PRO_D3_max", "IND_PRO_CP_max",
                                                         "IND_PRO_GBV_max",
@@ -83,21 +103,7 @@ ds_per_sector <- weighted_pins_indicator |>
 # Exclude subsectors - CP, HT and GBV (only calculate intersectoral MPI with 9 dimensions)
 
 df_pin <- ds_per_sector %>%
-  select(
-    id_hogar, id_individual, SECTOR, DEMO_18, HH04, HH07, HH07_months, CARI_FES,
-    Food_security_ds,
-    Health_ds,
-    Humanitarian_transport_ds,
-    Integration_ds,
-    Nutrition_ds,
-    Protection_ds,
-    Child_protection_ds,
-    Gender_based_violence_ds,
-    HT_S_ds,
-    Shelter_ds,
-    Wash_ds,
-    Education_ds) |>
-  mutate(intersector_ds = rowSums(across(c(
+  mutate(intersector_ds = rowSums(select(., c(
     "Food_security_ds",
     "Health_ds",
     "Humanitarian_transport_ds",
@@ -107,9 +113,12 @@ df_pin <- ds_per_sector %>%
     "Shelter_ds",
     "Wash_ds",
     "Education_ds"
-  )), na.rm = TRUE)) |>
+  )), na.rm = TRUE)) %>%
   # Calculate if included in intersector_pin with the threshold of 33.3% of intersector ds
   mutate(intersector_pin = ifelse(intersector_ds > 0.333, 1, 0))
+# ggplot of intersector_ds to see distribution
+
+
 
 # ggplot of intersector_ds to see distribution
 
@@ -123,18 +132,7 @@ ggplot(df_pin, aes(x = intersector_ds)) +
 pin_intersector <- sum(df_pin$"intersector_pin") / nrow(df_pin)
 
 
-### Step 3: Adjustments for Nutrition, Education and Child Protection PINs
-df_pin <- df_pin |>
-  mutate(
-    Under_18 = ifelse(HH07 < 18, 1, 0),
-    Women_nut = ifelse(HH04 == "2" & (HH07 <= 50 & HH07 >= 14), 1, 0),
-    Children_nut = ifelse(HH07 < 5, 1, 0)) |>
-  select(id_hogar, id_individual, SECTOR, DEMO_18, HH04, HH07, HH07_months, CARI_FES, Under_18, Women_nut, Children_nut,
-         Food_security_ds, Health_ds, Humanitarian_transport_ds, Integration_ds, Nutrition_ds, Protection_ds,
-         Child_protection_ds, Gender_based_violence_ds, HT_S_ds, Shelter_ds, Wash_ds, Education_ds, intersector_ds, intersector_pin)
-
-
-### Step 4: Identify individuals with deprivations in each sector. 
+### Step 3: Identify individuals with deprivations in each sector. 
 
 #Now, having the figure of the Intersectoral MPI, we can identify who is part of the MPI of each sector. 
 #This ensures that, although a person may have all the deprivations in a sector, they will
@@ -151,10 +149,10 @@ df_sectoral_pin <- df_pin %>%
       "Humanitarian_transport_ds",
       "Integration_ds",
       "Nutrition_ds",
+      "Education_ds",
       "Protection_ds",
       "Shelter_ds",
-      "Wash_ds",
-      "Education_ds"
+      "Wash_ds"
     ),
     ~ ifelse(intersector_pin == 1 & . > 0, 1, 0)
   )) |>
@@ -165,13 +163,12 @@ df_sectoral_pin <- df_pin %>%
                 "Humanitarian_transport_ds",
                 "Integration_ds",
                 "Nutrition_ds",
+                "Education_ds",
                 "Protection_ds",
                 "Shelter_ds",
-                "Wash_ds",
-                "Education_ds")) %>%
+                "Wash_ds")) %>%
   mutate(across(
     c(
-      "Child_protection_ds",
       "Gender_based_violence_ds",
       "HT_S_ds"
     ),
@@ -181,33 +178,147 @@ df_sectoral_pin <- df_pin %>%
   rename_with( ~ str_replace(., "_ds$", "_pin")) 
 
 
-write_xlsx(df_sectoral_pin, "final_data.xlsx")
+#Education
+df_sectoral_pin_edu <- df_pin |>
+  filter(Under_18 == "1") |>
+  select(-intersector_ds, Education_ds) |>
+  #include in sectorial pins if included in intersectorial pin (intersector== 1) 
+  #and there is a privation in the specific sector (sector_ds>0)
+  mutate(across(
+    c(
+      "Education_ds"
+    ),
+    ~ ifelse(intersector_pin == 1 & . > 0, 1, 0)
+  )) |>
+  #rename ds to pin
+  rename_with( ~ str_replace(., "_ds$", "_pin")) 
 
+#final Education pin
+pins_final_edu <- data.frame(  
+  Sectors = c(
+    "Education"
+  ),
+  pins = round(colSums(select(df_sectoral_pin_edu, Education_pin)) / nrow(df_sectoral_pin_edu) *
+                 100, 1)
+)
+
+
+#Nutrition women
+df_sectoral_pin_nut_w <- df_pin %>%
+  filter(Women_nut == "1")%>%
+  select(-intersector_ds, Nutrition_ds_women) %>%
+  #include in sectorial pins if included in intersectorial pin (intersector== 1) 
+  #and there is a privation in the specific sector (sector_ds>0)
+  mutate(across(
+    c(
+      "Nutrition_ds_women"
+    ),
+    ~ ifelse(intersector_pin == 1 & . > 0, 1, 0)
+  )) |>
+  #rename ds to pin
+  rename_with( ~ str_replace(., "_ds_", "_pin_")) 
+
+#final Nutrition women pin
+pins_final_nut_w <- data.frame(  
+  Sectors = c(
+    "Nutrition Woman"
+  ),
+  pins = round(colSums(select(df_sectoral_pin_nut_w, Nutrition_pin_women)) / nrow(df_sectoral_pin_nut_w) *
+                 100, 1)
+)
+
+
+#Nutrition 0-5 years
+df_sectoral_pin_nut_b <- df_pin %>%
+  filter(Children_nut == "1")%>%
+  select(-intersector_ds, Nutrition_ds_baby) %>%
+  #include in sectorial pins if included in intersectorial pin (intersector== 1) 
+  #and there is a privation in the specific sector (sector_ds>0)
+  mutate(across(
+    c(
+      "Nutrition_ds_baby"
+    ),
+    ~ ifelse(intersector_pin == 1 & . > 0, 1, 0)
+  )) |>
+  #rename ds to pin
+  rename_with( ~ str_replace(., "_ds_", "_pin_")) 
+
+#final Nutrition baby pin
+pins_final_nut_b <- data.frame(  
+  Sectors = c(
+    "Nutrition Baby"
+  ),
+  pins = round(colSums(select(df_sectoral_pin_nut_b, Nutrition_pin_baby)) / nrow(df_sectoral_pin_nut_b) *
+                 100, 1)
+)
+
+#Child Protection
+df_sectoral_pin_cp <- df_sectoral_pin %>%
+  filter(Under_18 == "1")%>%
+  #include in sectorial pins if included in intersectorial pin (intersector== 1) 
+  #and there is a privation in the specific sector (sector_ds>0)
+  mutate(across(
+    c(
+      "Child_protection_pin"
+    ),
+    ~ ifelse(Protection_pin == 1 & . > 0, 1, 0)
+  )) |>
+  #rename ds to pin
+  rename_with( ~ str_replace(., "_ds$", "_pin")) 
+
+#final CP  pin
+pins_final_cp <- data.frame(  
+  Sectors = c(
+    "Child Protection"
+  ),
+  pins = round(colSums(select(df_sectoral_pin_cp, Child_protection_pin)) / nrow(df_sectoral_pin_cp) *
+                 100, 1)
+)
 
 
 #final PIN table
-df_sectoral_pin_filtered = df_sectoral_pin |>
-  select(12:24)
-
-pins_final <- data.frame(
+pins_final <- data.frame(  
   Sectors = c(
     "Food_security",
     "Health",
     "Humanitarian_transport",
     "Integration",
     "Nutrition",
+    "Education",
     "Protection",
-    "Child_protection",
     "Gender_based_violence",
     "Human_Traficking_&_Smuggling",
     "Shelter",
     "Wash",
-    "Education",
     "Intersector"
   ),
-  pins = round(colSums(df_sectoral_pin_filtered) / nrow(df_sectoral_pin_filtered) *
+  pins = round(colSums(select(df_sectoral_pin, Food_security_pin, Health_pin, 
+                              Humanitarian_transport_pin, Integration_pin,
+                              Nutrition_pin,
+                              Education_pin,
+                              Protection_pin, Gender_based_violence_pin,
+                              HT_S_pin,
+                              Shelter_pin, Wash_pin, intersector_pin)) / nrow(df_sectoral_pin) *
                  100, 1)
 )
 
-write_xlsx(pins_final, "pins_final.xlsx")
+#merge EDU, NUT, CP and final
+
+#merge
+
+pins_final_final <- rbind(pins_final, pins_final_edu, pins_final_nut_w, pins_final_nut_b, pins_final_cp)
+
+write_xlsx(pins_final_final, "20240813 pins_final.xlsx")
+
+# ALL <- df_sectoral_pin
+# ALL_cp <- df_sectoral_pin_cp
+# ALL_edu <- df_sectoral_pin_edu
+# ALL_nut_b <- df_sectoral_pin_nut_b
+# ALL_nut_w <- df_sectoral_pin_nut_w
+# 
+# write_xlsx(ALL, "20240813 ALL.xlsx")
+# write_xlsx(ALL_cp, "20240813 ALL_cp.xlsx")
+# write_xlsx(ALL_edu, "20240813 ALL_edu.xlsx")
+# write_xlsx(ALL_nut_b, "20240813 ALL_nut_b.xlsx")
+# write_xlsx(ALL_nut_w, "20240813 ALL_nut_w.xlsx")
 

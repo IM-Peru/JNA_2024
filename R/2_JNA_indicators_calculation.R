@@ -1,7 +1,8 @@
-
 ###############################################
 ##### Step 10. Household level indicators ##### 
 ###############################################
+# main_merged <- read_excel("main_merged.xlsx")
+
 
 # Indicator creation for the dimensions at the household level. 
 # Be careful since I did some adhoc adjustmets. For example creating the round_half_up function in step 3 and the variable SHE_D1_Q3_ALL in step 4. 
@@ -12,10 +13,11 @@
 # INT_D4: Porcentaje de personas encuestadas que no tienen acceso a servicios financieros
 
 main_merged <- main_merged |>
-  mutate(INT_D3 = if_else(!is.na(INT_D3_Q1B_7) & INT_D3_Q1B_7 == "1", 1, 0),
-         INT_D4 = if_else(INT_D4_Q1_10 == "1", 1, 0)) |>
+  mutate(INT_D3 = ifelse(!is.na(INT_D3_Q1B_7) & INT_D3_Q1B_7 == "1", 1, 0),
+         INT_D4 = ifelse(INT_D4_Q1_10 == "1", 1, 0)) |>
   mutate(IND_INT_D2_max = INT_D3,
          IND_INT_D3_max = INT_D4)
+
 
 ## Shelter
 # SHE_D1: Porcentaje de hogares que viven en viviendas con condiciones inadecuadas e insostenibles en el largo plazo (excluye hacinamiento)
@@ -24,7 +26,7 @@ main_merged <- main_merged |>
 # SHE_D4: Porcentaje de hogares que estan en riesgo de desalojo
 
 main_merged <- main_merged |>
-  mutate(SHE_D1 = if_else((SHE_D1_Q1 %in% c("3","7","8","9","10","11", "98") |
+  mutate(SHE_D1 = ifelse((SHE_D1_Q1 %in% c("3","7","8","9","10","11", "98") |
                              SHE_D1_Q2_6 != "1" |
                              SHE_D1_Q3_ALL == "0"), 1, 0),
          SHE_D2 = ifelse(MH_1/SHE_D2_Q1 > 3, 1, 0),
@@ -38,6 +40,7 @@ main_merged <- main_merged |>
          IND_SHE_D2_max = SHE_D3,
          IND_SHE_D3_max = SHE_D4)
 
+
 ## WASH
 # WA_D1: W1 Porcentaje de hogares de Refugiados y migrantes venezolanos o individuos que no acceden a una fuente primaria de agua mejorada para beber
 # WA_D2: W2 Porcentaje de hogares de Refugiados y migrantes venezolanos o individuos que no acceden de forma continua a suficiente cantidad de agua 
@@ -49,7 +52,7 @@ main_merged <- main_merged |>
 main_merged <- main_merged |>
   mutate(WA_D1 = ifelse(WA_D1_Q1 %in% c("3", "4", "5", "6") & 
                           WA_D1_Q2 == "2", 1, 0),
-         WA_D2 = ifelse(WA_D2_Q1 != "1" | 
+         WA_D2 = ifelse(WA_D2_Q1 == "0" | 
                           (WA_D2_Q2 %in% c("2", "3", "4", "5", "98", "99")), 1, 0),
          WA_D4 = ifelse(WA_D4_Q1	%in% c("5", "6") |
                           WA_D4_Q2 == "1", 1, 0),
@@ -61,13 +64,19 @@ main_merged <- main_merged |>
     IND_WA_D2_max = ifelse(WA_D4 == 1 | WA_D6 == 1, 1, 0),
     IND_WA_D3_max = ifelse(WA_D8 == 1 | WA_D11 == 1, 1,0))
 
+
 # Humanitarian Transportation
 # HT_D1: Porcentaje de personas encuestadas o jefes de hogar que tardan más de 30 minutos a su lugar de destino caminando o en bicicleta
+
 main_merged <- main_merged |>
-  mutate(HT_D1 = ifelse((HT_D1_Q1_first %in% c(1, 6) | 
-                           HT_D1_Q1_second %in% c(1, 6)) & 
-                          HT_D1_Q2 == "4", 1, 0)) |>
+  mutate(HT_D1 = ifelse(
+    (HT_D1_Q1_first %in% c(1, 6) | 
+       HT_D1_Q1_second %in% c(1, 6)) & 
+      HT_D1_Q2 == "4", 1,
+    ifelse((HT_D1_Q1_first %in% c(4, 96) |
+             HT_D1_Q1_second %in% c(4, 96)) & HT_D2_Q1 %in% c(5, 6), 1, 0))) |>
   mutate(IND_HT_max = HT_D1)
+
 
 # Food Security
 # FS_D1: porcentaje de personas en situación de inseguridad alimentaria (Componente 1. Puntaje del consumo de alimentos: Food Consumption Score FCS) - Versión resumida CORE
@@ -91,9 +100,9 @@ main_merged <- main_merged |>
     FCG == 3 ~ 1)) |>
   mutate(FS_D1 = FCS_4pt) |>
   mutate_at(vars(starts_with("FS_D2_Q")), ~as.numeric(as.character(.)))|>   #linea extra para Peru
-  mutate(R_CSI = (FS_D2_Q1 * 1 + FS_D2_Q2 * 2 + 
+  mutate(R_CSI = (FS_D2_Q1 * 1 + FS_D2_Q2 * 1 + 
                     FS_D2_Q3 * 1 + FS_D2_Q4 * 3 +
-                    FS_D2_Q5 * 1)) |>
+                    FS_D2_Q5 * 2)) |>
   mutate(r_CSI_categories = case_when(
     R_CSI <= 4 ~ 1,
     R_CSI > 4 & R_CSI <= 18 ~ 2,
@@ -134,7 +143,12 @@ main_merged <- main_merged |>
          Max_coping_behaviour = pmax(stress_coping, crisis_coping, emergency_coping),
          Max_coping_behaviour = recode(Max_coping_behaviour, "0" = 1)) |>
   mutate(FS_D4 = Max_coping_behaviour) |>
-  mutate(Mean_coping_capacity_FES = rowMeans(across(c(Max_coping_behaviour, Foodexp_4pt)), na.rm = TRUE),
+  mutate(gasto_pc = (FS_D3_Q1 + FS_D3_Q2)/MH_1) |>
+  mutate(FES_C = case_when( #we used 2023 poverty line and extreme poverty parameters
+    gasto_pc < 251 ~ 4,
+    gasto_pc >= 251 & gasto_pc < 446 ~ 3,
+    gasto_pc >= 446 & !is.na(gasto_pc) ~ 1)) |>
+  mutate(Mean_coping_capacity_FES = rowMeans(across(c(Max_coping_behaviour, FES_C)), na.rm = TRUE),
          CARI_unrounded_FES = rowMeans(across(c(FCS_rCSI, Mean_coping_capacity_FES)), na.rm = TRUE),
          CARI_FES = round_half_up(CARI_unrounded_FES))|> # do not use simple function "round"
   mutate(IND_FS_max = ifelse(CARI_FES > 2, 1, 0))
@@ -147,10 +161,10 @@ main_merged <- main_merged |>
 # PRO_D5: Porcentaje de hogares que tienen necesidad de protección internacional.
 
 main_merged <- main_merged |>
-  mutate(PRO_D1 = ifelse(PRO_D1_Q1 != "9", 1,0),
-         PRO_D2 = ifelse(PRO_D2_Q1 != "0", 1,0),
+  mutate(PRO_D1 = ifelse(PRO_D1_Q1 != "9", 1, 0),
+         PRO_D2 = ifelse(PRO_D2_Q1 != "0", 1, 0),
          PRO_D3 = ifelse(PRO_D3_Q1 == "1" & 
-                           PRO_D3_Q2 == "0",1,0),
+                           PRO_D3_Q2 == "0", 1, 0),
          PRO_D5 = ifelse(PRO_D5_Q1 %in% c("1", "98", "99"), 1, 0)) |>
   mutate(IND_PRO_D1_max = case_when(PRO_D1 == 1 | PRO_D2 == 1 ~ 1,
                                     TRUE ~ 0),
@@ -162,34 +176,92 @@ main_merged <- main_merged |>
 # GBV_D3: Porcentaje de personas refugiadas y migrantes que se sienten o han sentido inseguras/os en su localidad/ comunidad frente al riesgo de VBG
 
 main_merged <- main_merged |>
-  mutate(GBV_D1 = ifelse(!is.na(GBV_D1_Q1) & GBV_D1_Q1 == "1", 1, 0),
-         GBV_D3 = ifelse(GBV_D3_Q1 %in% c("4", "5"), 1, 0) ) |>
+  mutate(GBV_D1 = ifelse(!is.na(GBV_D1_Q1) & GBV_D1_Q1 %in% c("1", "98", "99"), 1, 0),
+         GBV_D3 = ifelse(
+           GBV_D3_Q1 %in% c("4", "5") |
+             (CP_D1_Q1_4 == "1" | CP_D1_Q1_5 == "1") |
+             (PRO_D1_Q1_1 == "1" | PRO_D1_Q1_99 == "1") |
+             (HTS_D1_Q1 %in% c("1", "98", "99")) |
+             (HTS_D1_Q2 %in% c("1", "98", "99")) |
+             HTS_D2_Q1_4 == "1", 1, 0)) |>
   mutate(IND_PRO_GBV_max = case_when(GBV_D1 == 1 | GBV_D3 == 1 ~ 1,
                                      TRUE ~ 0))
+
 
 # Human Trafficking & Smuggling (HTS)
 # HTS_D1: Porcentaje de hogares que han estado expuestos a situaciones de medios de trata de personas
 # HTS_D2: Porcentaje de hogares que han sido expuestos a situaciones de explotación
 
 main_merged <- main_merged |>
-  mutate(HTS_D1 = ifelse(HTS_D1_Q1 == "1" | 
-                           HTS_D1_Q2 == "1", 1, 0),
-         HTS_D2 = ifelse(HTS_D2_Q1 != "6", 1, 0)) |>
+  mutate(HTS_D1 = case_when(HTS_D1_Q1 == "1" |
+                           HTS_D1_Q2 == "1" ~ 1,
+                           TRUE ~ 0
+                           )
+         ) |>
+  group_by(id_hogar) |>
+  mutate(
+    irregular_person = ifelse(any((PRO_D4_Q1_3 == "0" & PRO_D4_Q1_4 == "0" & PRO_D4_Q1_7 == "0"), na.rm = TRUE), 1, 0)) |>
+  ungroup() |>
+  mutate(
+    HTS_D2 = case_when(
+      HTS_D2_Q1_6 == 0 &
+      irregular_person == 1 ~ 1,
+      TRUE ~ 0)
+  ) |> 
   mutate(IND_PRO_HTS_max = case_when(HTS_D1 == 1 | HTS_D2 == 1 ~ 1,
                                      TRUE ~ 0))
 
 ## Child Protection (CP)
 # CP_D1: Porcentaje de hogares que manifiestan haber conocido algún NNA que ha experimentado violencia, abuso, negligencia, y explotación y no han recibido asistencia
+# main_merged <- main_merged |>
+#   group_by(id_hogar) |>
+#   mutate(
+#     CP_D1 = ifelse(
+#       any(
+#         CP_D1_Q1_1 == "1" |
+#           CP_D1_Q1_2 == "1" |
+#           CP_D1_Q1_3 == "1" |
+#           CP_D1_Q1_4 == "1" |
+#           CP_D1_Q1_5 == "1" |
+#           CP_D1_Q1_6 == "1", na.rm = TRUE), 1, 0),
+#     CP_D2 = ifelse(
+#       any(
+#         HH07 < 18 & (PRO_D4_Q1_3 == "0" & PRO_D4_Q1_4 == "0" & PRO_D4_Q1_7 == "0"), na.rm = TRUE), 1, 0)) |>
+#   ungroup() |>
+#   mutate(IND_PRO_CP_max = case_when(CP_D1 == 1 | CP_D2 == 1 ~ 1,
+#                                     TRUE ~ 0))
+
+
 main_merged <- main_merged |>
-  mutate(CP_D1 = case_when(
-    CP_D1_Q1 == "7" ~ 0,
-    CP_D1_Q1 == "98" ~ 0,
-    CP_D1_Q1 == "99" ~ 0,
-    CP_D1_Q2 != "0" ~ 0,
-    CP_D1_Q2 == "0" ~ 1,
-    TRUE ~ NA)
+  group_by(id_hogar) |>
+  mutate(
+    irregular_child = ifelse(any((PRO_D4_Q1_3 == "0" & PRO_D4_Q1_4 == "0" & PRO_D4_Q1_7 == "0") & HH07 < 18), 1, 0)) |>
+  ungroup() |> 
+  mutate(
+    CP_D1 = case_when(
+      CP_D1_Q1_1 == "1" |
+      CP_D1_Q1_2 == "1" |
+      CP_D1_Q1_3 == "1" |
+      CP_D1_Q1_4 == "1" |
+      CP_D1_Q1_5 == "1" |
+      CP_D1_Q1_6 == "1" | 
+      irregular_child == 1 ~ 1,
+      TRUE ~ 0
+      )
   ) |>
   mutate(IND_PRO_CP_max = CP_D1)
+
+
+# main_merged <- main_merged |>
+#   mutate(CP_D1 = case_when(
+#     CP_D1_Q1 == "7" ~ 0,
+#     CP_D1_Q1 == "98" ~ 0,
+#     CP_D1_Q1 == "99" ~ 0,
+#     CP_D1_Q2 != "0" ~ 0,
+#     CP_D1_Q2 == "0" ~ 1,
+#     TRUE ~ NA)
+#   ) |>
+#   mutate(IND_PRO_CP_max = CP_D1)
 
 
 ################################################
@@ -208,7 +280,7 @@ main_merged <- main_merged |>
     INT_D1 = ifelse(any(INT_D1_Q1 == "2", na.rm = TRUE), 1, 0),
     INT_D2 = case_when(any(INT_D2_Q1 %in% c("0", "98", "99") | 
                              INT_D2_Q2 %in% c("0", "98", "99") | 
-                             INT_D2_Q3 %in% c("0", "98", "99")) ~ 1,
+                             INT_D2_Q3 %in% c("0", "98", "99"), na.rm = TRUE) ~ 1,
                        TRUE ~ 0)) |>
   ungroup() |>
   mutate(IND_INT_D1_max = ifelse(INT_D1 == 1 | INT_D2 == 1, 1, 0))
@@ -309,3 +381,4 @@ main_merged <- main_merged |>
     IND_NUT_D2 = ifelse(NUT_D4 == 1 | NUT_D8 == 1, 1, 0),
     IND_NUT_D3 = ifelse(NUT_D10 == 1 | NUT_D5 == 1, 1, 0)) |>
   ungroup() 
+
