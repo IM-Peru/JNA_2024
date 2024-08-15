@@ -11,9 +11,9 @@ library(modeest)
 ##### Step 1. Load data #####
 #############################
 
-kobo_setup(url = "https://kobo.unhcr.org",token = "881a29d35c1e30a1e0d03ef1fb9c489763933d79")
+kobo_setup(url = "https://kobo.unhcr.org",token = ****)
 
-x <- kobo_submissions("aHP5J4VvRj23sdMABb9HUW")
+x <- kobo_submissions("******")
 
 HH <- x$main
 Individual <- x$rpt_hhmnames
